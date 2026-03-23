@@ -1,0 +1,25 @@
+[project]
+name = "nodeforge"
+version = "0.1.0"
+description = "Semantic graph system for VFX and AI workflows"
+requires-python = ">=3.13"
+dependencies = [
+    "networkx>=3.6.1",
+    "pydantic>=2.12.5",
+    "typer>=0.12.0",
+]
+
+[project.scripts]
+nodeforge = "nodeforge.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nodeforge"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]

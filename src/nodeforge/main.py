@@ -1,0 +1,97 @@
+import json
+import typer
+from nodeforge.core import SAMPLE_PIPELINE, summarize, load_graph, load_config, setup_logging
+from nodeforge.core.query import (
+    get_downstream, get_upstream, topological_sort,
+    find_cycles, validate_integrity, summarize_intent,
+)
+from pydantic import ValidationError
+
+app = typer.Typer()
+query_app = typer.Typer()
+app.add_typer(query_app, name="query")
+
+
+@app.callback()
+def _startup():
+    """Initialize logging and config before any command runs."""
+    config = load_config()
+    setup_logging(config.get("log_level", "INFO"))
+
+
+@app.command()
+def stats():
+    """Output pipeline statistics as JSON."""
+    typer.echo(json.dumps(summarize(SAMPLE_PIPELINE), indent=2))
+
+
+@app.command()
+def workflows():
+    """Output the full pipeline manifest as JSON."""
+    typer.echo(SAMPLE_PIPELINE.model_dump_json(indent=2))
+
+
+@app.command()
+def validate(path: str):
+    """Validate a graph JSON file against the NodeForge schema."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        graph = load_graph(data)
+        typer.echo(f"Valid — {len(graph.nodes)} nodes, {len(graph.edges)} edges.")
+    except FileNotFoundError:
+        typer.echo(f"Error: file not found: {path}")
+        raise typer.Exit(1)
+    except ValidationError as e:
+        typer.echo("Validation failed:")
+        typer.echo(e.json(indent=2))
+        raise typer.Exit(1)
+
+
+@app.command()
+def check():
+    """Run integrity and cycle checks on the default pipeline."""
+    integrity = validate_integrity(SAMPLE_PIPELINE)
+    cycles = find_cycles(SAMPLE_PIPELINE)
+    result = {
+        "integrity": integrity,
+        "cycles_found": len(cycles) > 0,
+        "cycles": cycles,
+    }
+    typer.echo(json.dumps(result, indent=2))
+
+
+@query_app.command("downstream")
+def query_downstream(node_id: str):
+    """List all nodes reachable downstream from NODE_ID."""
+    result = get_downstream(SAMPLE_PIPELINE, node_id)
+    typer.echo(json.dumps({"node_id": node_id, "downstream": result}, indent=2))
+
+
+@query_app.command("upstream")
+def query_upstream(node_id: str):
+    """List all nodes that are ancestors of NODE_ID."""
+    result = get_upstream(SAMPLE_PIPELINE, node_id)
+    typer.echo(json.dumps({"node_id": node_id, "upstream": result}, indent=2))
+
+
+@query_app.command("topo")
+def query_topo():
+    """Output nodes in topological (execution) order."""
+    try:
+        result = topological_sort(SAMPLE_PIPELINE)
+        typer.echo(json.dumps({"topological_order": result}, indent=2))
+    except ValueError as e:
+        typer.echo(f"Error: {e}")
+        raise typer.Exit(1)
+
+
+@query_app.command("intent")
+def query_intent():
+    """Output a semantic intent summary of the default pipeline."""
+    result = summarize_intent(SAMPLE_PIPELINE)
+    typer.echo(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    app()                                                                              

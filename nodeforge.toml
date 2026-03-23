@@ -1,0 +1,3 @@
+[nodeforge]
+log_level = "INFO"
+default_graph = ""
