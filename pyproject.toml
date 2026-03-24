@@ -6,6 +6,7 @@ requires-python = ">=3.13"
 dependencies = [
     "networkx>=3.6.1",
     "pydantic>=2.12.5",
+    "python-dotenv>=1.2.2",
     "typer>=0.12.0",
 ]
 
