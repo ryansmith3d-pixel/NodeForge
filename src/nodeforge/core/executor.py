@@ -63,12 +63,11 @@ async def execute_graph(graph: Graph) -> dict[str, Any]:
             _update_node_status(node, "FAILED")
             continue
 
-        # Collect inputs from upstream DATA edges
+        # Collect inputs from all upstream nodes — edge type gates execution, not data flow
         inputs: dict[str, Any] = {}
         for edge in upstream_edges:
-            if edge.type == "DATA":
-                upstream_output = results.get(edge.source, {})
-                inputs[edge.source] = upstream_output
+            upstream_output = results.get(edge.source, {})
+            inputs[edge.source] = upstream_output
 
         results[node_id] = await _execute_node(node, inputs)
 
