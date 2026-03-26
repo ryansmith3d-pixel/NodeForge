@@ -1,4 +1,5 @@
-from typing import Any
+from typing import Any 
+from typing import Literal
 from pydantic import BaseModel, Field
 
 
@@ -9,11 +10,10 @@ class Node(BaseModel):
         default_factory=dict,
         description="Type-specific parameters for this node. Keys and value types vary by node type."
     )
-    status: str = Field(
-        default="PENDING",
-        description="Execution status. One of: PENDING, RUNNING, SUCCESS, FAILED."
+    status: Literal["PENDING", "RUNNING", "SUCCESS", "FAILED"] = Field(
+    default="PENDING",
+    description="Execution status. PENDING → RUNNING → SUCCESS or FAILED."
     )
-
 
 class Edge(BaseModel):
     source: str = Field(description="ID of the source node.")

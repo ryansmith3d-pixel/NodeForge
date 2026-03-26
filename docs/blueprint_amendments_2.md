@@ -190,5 +190,44 @@ New rows to append to the constraints table in `blueprint_amendments-1.md`:
 
 ---
 
+### AMD-009 — State Management Migration Strategy
+Affects: Phase 7 / Pre-Phase 8 (conditional)  
+Status: PENDING — awaiting forcing function evaluation at Phase 7 close  
+Decided: 2026-03  
+Reason: The current module-level graph state model (`SAMPLE_PIPELINE`, `ARXIV_PIPELINE`
+imported directly by command functions) is incompatible with stateless HTTP serving and
+concurrent agent requests. This was the correct decision for Phases 0–6: the CLI is a
+single-process, single-command model and the constraint is invisible under that execution
+model. It becomes a real liability the moment NodeForge handles concurrent requests —
+two agents mutating the same graph object simultaneously produces undefined behavior,
+and there is no mechanism for graph isolation, persistence, or session state across calls.
+
+Remediation is a defined 5-step strangler fig migration documented in
+`state_management_migration.md`. It is non-trivial (4–5 focused micro-sessions) and
+should not be confused with "adding FastAPI" (a surface-level description of Step 5 only).
+
+The forcing function: this migration is required before Phase 8 begins **only if** the
+MCP server requires HTTP/SSE transport (rather than stdio), a web demo is required, or
+multiple graphs must be managed simultaneously. If none of those conditions are met,
+the constraint remains a documented liability and the migration is deferred indefinitely.  
+Change: Evaluate forcing function at Phase 7 close. If triggered, execute the 5-step
+migration (extract loaders → graph registry → executor isolation test → JSON persistence
+→ FastAPI layer) before Phase 8 implementation begins. Full migration detail in
+`state_management_migration.md`.  
+Done when: Forcing function evaluated at Phase 7 close. Migration executed if triggered;
+constraint documented and deferred if not.
+
+---
+
+## Architectural Constraints Log — Additions
+
+New row to append to the constraints table in `blueprint_amendments-1.md`:
+
+| Decision | Affects | Rationale |
+|---|---|---|
+| Module-level graph state is incompatible with stateless HTTP or concurrent agent requests | Phase 7 onward | Covered in AMD-009. Remediation is a defined 5-step strangler fig migration (`state_management_migration.md`), not an afternoon refactor. Triggered only if HTTP/SSE MCP transport or web demo is required. |
+
+---
+
 *Last updated: 2026-03*  
 *Owner: NodeForge project*

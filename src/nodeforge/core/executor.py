@@ -94,7 +94,7 @@ async def _execute_node(node: Node, inputs: dict[str, Any]) -> dict[str, Any]:
         output = await handler(node.params, inputs)
         _update_node_status(node, "SUCCESS")
         _log.info("Node '%s' completed successfully.", node.id)
-        return {"status": "SUCCESS", "node_id": node.id, **output}
+        return {**output, "status": "SUCCESS", "node_id": node.id}
     except Exception as e:
         _log.error("Node '%s' failed: %s", node.id, e)
         _update_node_status(node, "FAILED")
