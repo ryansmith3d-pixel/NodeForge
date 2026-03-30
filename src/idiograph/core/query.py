@@ -1,11 +1,11 @@
 import networkx as nx
-from nodeforge.core.models import Graph, Node
+from idiograph.core.models import Graph, Node
 
 
 # ── Internal helper ──────────────────────────────────────────────────────────
 
 def _build_nx_graph(graph: Graph) -> nx.DiGraph:
-    """Convert a NodeForge Graph into a networkx DiGraph for analysis."""
+    """Convert a idiograph Graph into a networkx DiGraph for analysis."""
     dg = nx.DiGraph()
     for node in graph.nodes:
         dg.add_node(node.id)
@@ -59,7 +59,7 @@ def validate_integrity(graph: Graph) -> dict:
     Check that every edge references node IDs that actually exist in the graph.
     Returns a dict with 'valid' (bool) and 'errors' (list of problem descriptions).
     """
-    from nodeforge.core.logging_config import get_logger
+    from idiograph.core.logging_config import get_logger
     _log = get_logger("query")
 
     node_ids = {node.id for node in graph.nodes}

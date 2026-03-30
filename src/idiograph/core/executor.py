@@ -2,9 +2,9 @@ import asyncio
 import logging
 from typing import Callable, Any
 
-from nodeforge.core.models import Graph, Node
-from nodeforge.core.query import topological_sort, find_cycles
-from nodeforge.core.logging_config import get_logger
+from idiograph.core.models import Graph, Node
+from idiograph.core.query import topological_sort, find_cycles
+from idiograph.core.logging_config import get_logger
 
 _log = get_logger("executor")
 

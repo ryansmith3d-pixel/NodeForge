@@ -1,4 +1,4 @@
-from nodeforge.core.models import Node, Edge, Graph
+from idiograph.core.models import Node, Edge, Graph
 
 SAMPLE_PIPELINE: Graph = Graph(
     name="lookdev_approval_pipeline",

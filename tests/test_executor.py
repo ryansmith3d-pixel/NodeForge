@@ -1,6 +1,6 @@
 import pytest
-from nodeforge.core.models import Node, Edge, Graph
-from nodeforge.core.executor import execute_graph, register_handler, HANDLERS
+from idiograph.core.models import Node, Edge, Graph
+from idiograph.core.executor import execute_graph, register_handler, HANDLERS
 
 
 @pytest.fixture(autouse=True)

@@ -1,5 +1,5 @@
-from nodeforge.core.executor import register_handler
-from nodeforge.handlers.arxiv import (
+from idiograph.core.executor import register_handler
+from idiograph.handlers.arxiv import (
     fetch_abstract,
     llm_call,
     evaluator,

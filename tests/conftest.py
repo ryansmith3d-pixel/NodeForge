@@ -1,5 +1,5 @@
 import pytest
-from nodeforge.core.models import Node, Edge, Graph
+from idiograph.core.models import Node, Edge, Graph
 
 
 @pytest.fixture

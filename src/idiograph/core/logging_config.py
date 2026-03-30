@@ -1,11 +1,11 @@
 import logging
 
-_LOGGER = logging.getLogger("nodeforge")
+_LOGGER = logging.getLogger("idiograph")
 
 
 def setup_logging(level: str = "INFO") -> None:
     """
-    Configure the nodeforge root logger.
+    Configure the idiograph root logger.
     Safe to call multiple times — only adds a handler if none exists.
     """
     numeric_level = getattr(logging, level.upper(), logging.INFO)
@@ -21,5 +21,5 @@ def setup_logging(level: str = "INFO") -> None:
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Return a child logger under the nodeforge namespace."""
-    return logging.getLogger(f"nodeforge.{name}")
+    """Return a child logger under the idiograph namespace."""
+    return logging.getLogger(f"idiograph.{name}")

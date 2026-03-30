@@ -1,5 +1,5 @@
-from nodeforge.core.models import Graph, Node, Edge
-from nodeforge.core.logging_config import get_logger
+from idiograph.core.models import Graph, Node, Edge
+from idiograph.core.logging_config import get_logger
 
 _log = get_logger("graph")
 

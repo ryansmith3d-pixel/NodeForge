@@ -1,4 +1,4 @@
-from nodeforge.core.models import Graph, Node, Edge
+from idiograph.core.models import Graph, Node, Edge
 
 ARXIV_PIPELINE: Graph = Graph(
     name="arxiv_abstract_pipeline",

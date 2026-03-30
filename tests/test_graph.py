@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
-from nodeforge.core.graph import get_node, get_edges_from, summarize, load_graph
-from nodeforge.core.models import Node
+from idiograph.core.graph import get_node, get_edges_from, summarize, load_graph
+from idiograph.core.models import Node
 
 
 class TestGetNode:

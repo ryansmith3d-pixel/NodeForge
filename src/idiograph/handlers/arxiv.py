@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 import httpx
 import anthropic
 
-from nodeforge.core.logging_config import get_logger
+from idiograph.core.logging_config import get_logger
 
 _log = get_logger("handlers.arxiv")
 

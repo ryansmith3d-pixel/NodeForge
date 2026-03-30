@@ -1,5 +1,5 @@
 import pytest
-from nodeforge.core.query import (
+from idiograph.core.query import (
     get_downstream,
     get_upstream,
     topological_sort,
@@ -7,7 +7,7 @@ from nodeforge.core.query import (
     validate_integrity,
     summarize_intent,
 )
-from nodeforge.core.models import Edge, Graph, Node
+from idiograph.core.models import Edge, Graph, Node
 
 
 class TestDownstream:

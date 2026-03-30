@@ -2,9 +2,9 @@ import json
 import asyncio
 import typer
 from dotenv import load_dotenv
-from nodeforge.core import SAMPLE_PIPELINE, summarize, load_graph, load_config, setup_logging
-from nodeforge.core.executor import execute_graph
-from nodeforge.core.query import (
+from idiograph.core import SAMPLE_PIPELINE, summarize, load_graph, load_config, setup_logging
+from idiograph.core.executor import execute_graph
+from idiograph.core.query import (
     get_downstream, get_upstream, topological_sort,
     find_cycles, validate_integrity, summarize_intent,
 )
@@ -37,7 +37,7 @@ def workflows():
 
 @app.command()
 def validate(path: str):
-    """Validate a graph JSON file against the NodeForge schema."""
+    """Validate a graph JSON file against the idiograph schema."""
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
@@ -68,8 +68,8 @@ def check():
 @app.command()
 def run(paper_id: str = typer.Argument(..., help="arXiv paper ID, e.g. 2401.00001")):
     """Execute the arXiv pipeline for a given paper ID."""
-    from nodeforge.handlers import register_all
-    from nodeforge.pipelines.arxiv import ARXIV_PIPELINE
+    from idiograph.handlers import register_all
+    from idiograph.pipelines.arxiv import ARXIV_PIPELINE
 
     register_all()
 
