@@ -21,13 +21,7 @@ Idiograph applies that same architecture to AI agent workflows, and asks: what d
 
 Idiograph is a Python-based semantic graph system. It represents VFX pipeline stages and AI agent operations as nodes in a unified, typed, JSON-serializable graph. The graph is the single source of truth. CLI, agents, and (optionally) UI are all operators on that graph — none of them own state.
 
-The system supports:
-
-- VFX pipeline nodes (`LoadAsset`, `ApplyShader`, `ShaderValidate`, `RenderComparison`, `LookApproval`)
-- AI agent nodes (`LLMCall`, `VectorRetrieve`, `Evaluator`, `Router`, `MemoryUpdate`)
-- Mixed hybrid pipelines that combine both domains under the same architecture
-
-Both kinds of node are represented identically. There is no special-casing.
+The current implementation includes an arXiv research pipeline — nodes that fetch a paper, extract claims via LLM, evaluate against keyword criteria, and conditionally summarize. The architecture is domain-agnostic by design: VFX pipeline nodes (LoadAsset, ApplyShader, ShaderValidate) and additional AI agent node types are planned for Phase 10. Both would be represented identically to the existing nodes. There is no special-casing in the executor.
 
 ---
 
@@ -79,6 +73,27 @@ src/idiograph/
 **Domain implementations are isolated from core.** `core/` is domain-agnostic. The arXiv pipeline lives under `domains/arxiv/`. A VFX rendering domain in Phase 10 gets its own subdirectory. Nothing in `core/` changes when a new domain is added.
 
 **`summarize_intent()` is purely algorithmic.** The query layer can describe what a subgraph does and where it might fail without an LLM call. Deterministic output for deterministic input.
+
+---
+
+## Pipelines
+
+<!-- GENERATED:arxiv-pipeline -->
+```mermaid
+flowchart LR
+    fetch["fetch
+FetchAbstract"]
+    claims["claims
+LLMCall"]
+    evaluate["evaluate
+Evaluator"]
+    summarize["summarize
+LLMSummarize"]
+    fetch -->|DATA| claims
+    claims -->|DATA| evaluate
+    evaluate -->|CONTROL| summarize
+```
+<!-- END GENERATED -->
 
 ---
 

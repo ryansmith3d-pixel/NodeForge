@@ -27,3 +27,8 @@ jobs:
 
       - name: Run tests
         run: uv run pytest tests/ -v
+
+      - name: Verify README diagrams are in sync
+        run: |
+          uv run python scripts/gen_diagrams.py
+          git diff --exit-code README.md || (echo "README diagrams are out of sync. Run scripts/gen_diagrams.py and commit the result." && exit 1)
