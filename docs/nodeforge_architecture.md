@@ -1,4 +1,4 @@
-# NodeForge — Architecture Diagrams
+# Idiograph — Architecture Diagrams
 
 ---
 
@@ -107,13 +107,13 @@ graph TD
 
         cfg["config.py
         load_config
-        Reads nodeforge.toml
+        Reads idiograph.toml
         Falls back to defaults"]
 
         log["logging_config.py
         setup_logging
         get_logger
-        nodeforge.* namespace"]
+        idiograph.* namespace"]
     end
 
     subgraph TEST ["Test Layer"]
@@ -186,7 +186,7 @@ sequenceDiagram
     participant Models as models.py
     participant NX as networkx
 
-    User->>CLI: nodeforge query intent
+    User->>CLI: idiograph query intent
     CLI->>Core: import SAMPLE_PIPELINE
     Core->>Models: Graph / Node / Edge instances
     Models-->>Core: typed, validated graph

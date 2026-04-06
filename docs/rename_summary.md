@@ -1,13 +1,13 @@
-# Rename Summary — NodeForge → Idiograph
+# Rename Summary — Idiograph → Idiograph
 
 ## What Changed
-The project was renamed from NodeForge to Idiograph across every layer:
+The project was renamed from Idiograph to Idiograph across every layer:
 source directory, package name, CLI entry point, all internal imports, config
 file, logging namespace, and GitHub repository. The rename is complete and
 permanent. 44 tests pass without modification. No functionality changed.
 
 ## Why It Changed
-NodeForge named the mechanism — nodes, building — without naming the idea.
+Idiograph named the mechanism — nodes, building — without naming the idea.
 The new name carries the thesis directly.
 
 **Idiograph** is a real English word (first recorded 1623) meaning "a mark or
@@ -27,7 +27,7 @@ distributions. A probabilistic system is nomothetic by design. A deterministic
 semantic graph is idiographic — this specific pipeline, these specific nodes,
 this specific execution. The particular is the point.
 
-NodeForge sounded like a product a Foundry competitor would ship. Idiograph
+Idiograph sounded like a product a Foundry competitor would ship. Idiograph
 sounds like a thesis.
 
 ## Namespace Secured
@@ -41,15 +41,15 @@ sounds like a thesis.
 
 ### Directory
 ```
-src/nodeforge/  →  src/idiograph/
+src/idiograph/  →  src/idiograph/
 ```
 
 ### pyproject.toml
 ```toml
 # Before
-name = "nodeforge"
-nodeforge = "nodeforge.main:app"
-packages = ["src/nodeforge"]
+name = "idiograph"
+idiograph = "idiograph.main:app"
+packages = ["src/idiograph"]
 
 # After
 name = "idiograph"
@@ -59,16 +59,16 @@ packages = ["src/idiograph"]
 
 ### Config file
 ```
-nodeforge.toml  →  idiograph.toml
-[nodeforge]     →  [idiograph]
+idiograph.toml  →  idiograph.toml
+[idiograph]     →  [idiograph]
 ```
 
 ### All internal imports
 ```python
 # Before
-from nodeforge.core import ...
-from nodeforge.handlers import ...
-from nodeforge.pipelines import ...
+from idiograph.core import ...
+from idiograph.handlers import ...
+from idiograph.pipelines import ...
 
 # After
 from idiograph.core import ...
@@ -79,8 +79,8 @@ from idiograph.pipelines import ...
 ### Logging namespace
 ```python
 # Before
-logging.getLogger("nodeforge")
-logging.getLogger(f"nodeforge.{name}")
+logging.getLogger("idiograph")
+logging.getLogger(f"idiograph.{name}")
 
 # After
 logging.getLogger("idiograph")
@@ -88,7 +88,7 @@ logging.getLogger(f"idiograph.{name}")
 ```
 
 ### GitHub
-- Repo renamed from NodeForge to idiograph
+- Repo renamed from Idiograph to idiograph
 - Repo transferred to the idiograph org
 - Local remote updated:
   `git remote set-url origin https://github.com/idiograph/idiograph.git`
@@ -104,7 +104,7 @@ git push                          → repo live at github.com/idiograph/idiograp
 ## Commit
 ```
 git add -A
-git commit -m "Rename: nodeforge → idiograph"
+git commit -m "Rename: idiograph → idiograph"
 git push
 ```
 

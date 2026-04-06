@@ -1,13 +1,13 @@
-# NodeForge – Session Workflow Protocol
+# Idiograph – Session Workflow Protocol
 
-This document defines the standard structure for every working session on the NodeForge project.
+This document defines the standard structure for every working session on the Idiograph project.
 It exists so that sessions can be short, interrupted, and resumed without losing momentum or context.
 
 ---
 
 ## Why This Structure Exists
 
-NodeForge is being built part-time alongside a full-time production role.
+Idiograph is being built part-time alongside a full-time production role.
 Sessions may be days or weeks apart. The workflow below ensures that every session:
 
 - starts with a shared understanding of current state
@@ -155,5 +155,5 @@ the decisions are still fresh.
 
 ---
 
-*Owner: NodeForge project*
+*Owner: Idiograph project*
 *Last updated: 2026-03*

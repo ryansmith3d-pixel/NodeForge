@@ -1,4 +1,4 @@
-# NodeForge – Blueprint Amendments & Decision Log
+# Idiograph – Blueprint Amendments & Decision Log
 
 This document tracks amendments to the original Blueprint, and the reasoning behind each one.
 The Blueprint itself is not modified — this file sits alongside it as the living layer.
@@ -53,7 +53,7 @@ semantic description oriented toward agent reasoning and decision-making.
 Change: Add a `summarize_intent(graph, subgraph_ids=None)` function to the query layer.
 Output is a structured dict (JSON-serializable) describing: what the subgraph computes,
 its domain (VFX / AI / mixed), its critical path, and any failure points or bottlenecks.
-Expose via CLI as `nodeforge query intent`.  
+Expose via CLI as `idiograph query intent`.  
 Done when: An agent can call `summarize_intent()` on a subgraph and receive a structured
 response that meaningfully answers "what does this do and where might it fail?" without
 needing to inspect individual nodes.
@@ -85,14 +85,14 @@ Decided: 2026-03
 Reason: The Blueprint says "integrate with LLM frameworks" — MCP (Model Context Protocol)
 is now the dominant open standard for exactly this. Naming it explicitly means Phase 8 has
 a concrete delivery target rather than a vague integration goal. MCP means any agent
-(Claude, GPT, local models) can connect to NodeForge without bespoke adapters. This also
+(Claude, GPT, local models) can connect to Idiograph without bespoke adapters. This also
 strengthens the thesis demo: you're not showing a Claude-specific tool, you're showing a
 standards-compliant agent-operable system.  
-Change: Phase 8 delivery target is an MCP Server wrapping NodeForge's core tool interfaces.
+Change: Phase 8 delivery target is an MCP Server wrapping Idiograph's core tool interfaces.
 Tools exposed via MCP: `get_node`, `get_edges_from`, `update_node`, `summarize_intent`,
 `validate_graph`, `execute_graph` (once Phase 6 is complete). The MCP server is the
 proof-of-concept artifact for the thesis — not just an integration detail.  
-Done when: A Claude agent (or equivalent) can connect to the NodeForge MCP server,
+Done when: A Claude agent (or equivalent) can connect to the Idiograph MCP server,
 inspect a graph, modify a node parameter, and re-validate — with no human-written adapter
 code between the agent and the graph.
 
@@ -111,7 +111,7 @@ Change: Add a graph-level integrity check function — `validate_integrity(graph
 query/analysis layer in Phase 4.5. It must verify that every `source` and `target` ID on
 every edge corresponds to a node that exists in the graph. Returns a structured result
 listing any dangling edge references. Expose via CLI as part of the `validate` command or
-as a separate `nodeforge check` command.  
+as a separate `idiograph check` command.  
 Done when: A graph containing an edge that references a non-existent node ID is caught and
 reported with the specific edge and missing node ID identified. Clean graphs pass silently.
 
@@ -126,8 +126,8 @@ These are decisions that constrain future phases. Tracked here so they don't get
 | Edge `type` must be an open/extensible string, not a closed enum | Phase 3 onward | Covered in AMD-003. Phase 10 requires causal edge types (MODULATES, DRIVES, OCCLUDES, EMITS, PROJECTS_TO). A closed enum would require breaking changes. |
 | Node domain (VFX / AI / rendering) is metadata only, never a structural constraint | Phase 3 onward | Phase 10 rendering nodes must fit the same architecture without special-casing. Domain is a label for query filtering, not a type gate. |
 | Content-addressed caching preferred over dirty flagging | Phase 6+ | Hash each node's params + input hashes as the cache key. Stateless, fits JSON-serializable graph, reinforces determinism thesis. Event sourcing is a secondary option for agent audit trails only. |
-| NodeForge is not a DCC adapter | All phases | The system is an independent semantic graph — not a Houdini plugin or a wrapper for proprietary tools. Agent integration targets the NodeForge graph directly, not downstream software. |
-| File I/O must specify UTF-8 encoding explicitly | Phase 3 onward | Windows default encoding is cp1252. Any open() call on a JSON file without encoding="utf-8" will silently misread non-ASCII characters. All file reads and writes in NodeForge must specify encoding explicitly. |
+| Idiograph is not a DCC adapter | All phases | The system is an independent semantic graph — not a Houdini plugin or a wrapper for proprietary tools. Agent integration targets the Idiograph graph directly, not downstream software. |
+| File I/O must specify UTF-8 encoding explicitly | Phase 3 onward | Windows default encoding is cp1252. Any open() call on a JSON file without encoding="utf-8" will silently misread non-ASCII characters. All file reads and writes in Idiograph must specify encoding explicitly. |
 
 ---
 
@@ -143,4 +143,4 @@ Things that have come up but are not yet decided.
 ---
 
 *Last updated: 2026-03*  
-*Owner: NodeForge project*
+*Owner: Idiograph project*

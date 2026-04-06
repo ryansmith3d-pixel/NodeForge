@@ -17,13 +17,13 @@ E:\projects\nodeforge
 │   README.md
 │
 └───src
-    └───nodeforge
+    └───idiograph
             __init__.py
             main.py
 ```
 
 ## Key Decisions
-- **`src/nodeforge/` layout** — keeps the installable package separate from scripts and tests. Matters later when agents need to import it cleanly.
+- **`src/idiograph/` layout** — keeps the installable package separate from scripts and tests. Matters later when agents need to import it cleanly.
 - **`uv` for everything** — dependency management, Python version management, running the package. Single tool, no Conda conflicts.
 - **Typer for CLI** — clean command interface that will expand naturally as we add subcommands in Phase 1.
 - **Editable install** (`-e .`) — changes to source are immediately reflected without reinstalling.
@@ -37,7 +37,7 @@ E:\projects\nodeforge
 ### `pyproject.toml`
 ```toml
 [project]
-name = "nodeforge"
+name = "idiograph"
 version = "0.1.0"
 description = "Semantic graph system for VFX and AI workflows"
 requires-python = ">=3.13"
@@ -46,17 +46,17 @@ dependencies = [
 ]
 
 [project.scripts]
-nodeforge = "nodeforge.main:app"
+idiograph = "idiograph.main:app"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/nodeforge"]
+packages = ["src/idiograph"]
 ```
 
-### `src/nodeforge/main.py`
+### `src/idiograph/main.py`
 ```python
 import typer
 
@@ -65,27 +65,27 @@ app = typer.Typer()
 
 @app.command()
 def hello():
-    """NodeForge is alive."""
-    typer.echo("NodeForge v0.1.0 — semantic graph system online.")
+    """Idiograph is alive."""
+    typer.echo("Idiograph v0.1.0 — semantic graph system online.")
 
 
 if __name__ == "__main__":
     app()
 ```
 
-### `src/nodeforge/__init__.py`
+### `src/idiograph/__init__.py`
 ```python
 # empty
 ```
 
 ## Verified Working
 ```
-uv run nodeforge
-NodeForge v0.1.0 — semantic graph system online.
+uv run idiograph
+Idiograph v0.1.0 — semantic graph system online.
 ```
 
 ## Note on Typer Behavior
-With a single command defined, Typer makes the app itself the command — `nodeforge` runs directly. Once we add multiple subcommands in Phase 1, the pattern becomes `nodeforge stats`, `nodeforge workflows`, etc. This is expected Typer behavior.
+With a single command defined, Typer makes the app itself the command — `idiograph` runs directly. Once we add multiple subcommands in Phase 1, the pattern becomes `idiograph stats`, `idiograph workflows`, etc. This is expected Typer behavior.
 
 ## Next: Phase 1
 Produce structured JSON output instead of print statements. Add `stats` and `workflows` CLI commands. Establish the pattern of machine-readable output that both pipelines and AI agents can consume.

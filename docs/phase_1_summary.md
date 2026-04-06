@@ -15,7 +15,7 @@ E:\projects\nodeforge
 │   README.md
 │
 └───src
-    └───nodeforge
+    └───idiograph
             __init__.py
             main.py       ← updated
             pipeline.py   ← new
@@ -32,7 +32,7 @@ E:\projects\nodeforge
 
 ## Files
 
-### `src/nodeforge/pipeline.py`
+### `src/idiograph/pipeline.py`
 ```python
 SAMPLE_PIPELINE: dict = {
     "name": "lookdev_approval_pipeline",
@@ -78,11 +78,11 @@ SAMPLE_PIPELINE: dict = {
 }
 ```
 
-### `src/nodeforge/main.py`
+### `src/idiograph/main.py`
 ```python
 import json
 import typer
-from nodeforge.pipeline import SAMPLE_PIPELINE
+from idiograph.pipeline import SAMPLE_PIPELINE
 
 app = typer.Typer()
 
@@ -127,10 +127,10 @@ if __name__ == "__main__":
 
 ## Verified Working
 ```
-uv run nodeforge stats       → pipeline statistics as JSON
-uv run nodeforge workflows   → full manifest as JSON
-uv run nodeforge --help      → both subcommands listed
+uv run idiograph stats       → pipeline statistics as JSON
+uv run idiograph workflows   → full manifest as JSON
+uv run idiograph --help      → both subcommands listed
 ```
 
 ## Next: Phase 2
-Convert the package into a properly structured module with `nodeforge.core`. Move pipeline data and logic into submodules. The goal is a system where functions are importable cleanly — by humans, by tests, and eventually by agents.
+Convert the package into a properly structured module with `idiograph.core`. Move pipeline data and logic into submodules. The goal is a system where functions are importable cleanly — by humans, by tests, and eventually by agents.

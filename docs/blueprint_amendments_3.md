@@ -1,4 +1,4 @@
-# NodeForge – Blueprint Amendments & Decision Log (Addendum 3)
+# Idiograph – Blueprint Amendments & Decision Log (Addendum 3)
 
 Continues from `blueprint_amendments_2.md`.
 Last amendment in previous log: AMD-009.
@@ -13,21 +13,21 @@ Last amendment in previous log: AMD-009.
 Affects: Phase 8 (or pre-Phase 8 cleanup)
 Status: PENDING
 Decided: 2026-03
-Reason: The live `nodeforge run` command requires an Anthropic API key, creating a
+Reason: The live `idiograph run` command requires an Anthropic API key, creating a
 barrier for anyone evaluating the repo — collaborators, interviewers, or potential
 employers. The 44-test suite already runs without a key via stub handlers — this is
 not incidental, it is the handler registry pattern doing exactly what it was designed
 to do (AMD-007). The `--mock` flag extends that property to the CLI demo, making the
 full execution pipeline demonstrable on any machine without credentials. The
 architecture is the thesis artifact. A key requirement gates access to the architecture.
-Change: Add `--mock` flag to `nodeforge run`. When set, registers lightweight stub
+Change: Add `--mock` flag to `idiograph run`. When set, registers lightweight stub
 handlers that return plausible structured output without any API calls or network
 access. The full pipeline executes: topological sort, node status progression, results
 dict, failure handling — all demonstrable without a key. Add `.env.example` to the
 repo root with the key name but no value. Add an explicit section to the README:
 "Running tests requires no API key. Running the live demo requires one. Run with
 `--mock` to see the full pipeline without credentials."
-Done when: `nodeforge run 1706.03762 --mock` executes the full arXiv pipeline,
+Done when: `idiograph run 1706.03762 --mock` executes the full arXiv pipeline,
 produces a complete and plausible results dict, and requires no API key or network
 access. `.env.example` is committed. README section is present.
 
@@ -50,7 +50,7 @@ Change: Restructure `handlers/` and `pipelines/` into a `domains/` package with 
 subdirectory per domain:
 
 ```
-src/nodeforge/
+src/idiograph/
     core/            ← domain-agnostic, unchanged
     domains/
         arxiv/
@@ -76,7 +76,7 @@ Affects: Phase 9 (Documentation & Visibility) — or earlier, since repo is alre
 Status: PENDING
 Decided: 2026-03
 Reason: GitHub natively renders Mermaid diagrams inside any Markdown file with no
-setup required. The NodeForge thesis is about graph architecture. A visitor landing
+setup required. The Idiograph thesis is about graph architecture. A visitor landing
 on the repo currently reads about graphs — with Mermaid they see one immediately,
 before running any code. For a credibility artifact aimed at AI company leadership,
 the argument becoming visual before it becomes technical is significant. Three diagrams
@@ -103,7 +103,7 @@ Reason: USD composition is one of the hardest conceptual surfaces in production 
 LIVRPS precedence ordering is a formal, deterministic rule set — but the inverse problem
 ("what composition strategy produces this opinion?") requires reasoning backward through
 that rule set under constraints that are often stated in natural language by the person
-asking. This is precisely the class of problem NodeForge's architecture is designed for,
+asking. This is precisely the class of problem Idiograph's architecture is designed for,
 and the domain makes the thesis unusually concrete: a probabilistic tool cannot enumerate
 valid USD composition strategies reliably because USD semantics are formal, not
 probabilistic. Correct reasoning here requires a deterministic rule graph, not inference
@@ -307,7 +307,7 @@ Decided: 2026-03
 
 ### Reason
 
-NodeForge's current schema connects nodes by ID. Edges carry no type information.
+Idiograph's current schema connects nodes by ID. Edges carry no type information.
 Ports are implicit: a node's inputs and outputs are inferred from params and
 execution results, not declared. This is acceptable for simple demonstration graphs.
 It is a credibility failure at production scale.
@@ -316,12 +316,12 @@ Production node graphs are not small. At Rhythm & Hues, the average Houdini scen
 contained 250,000 nodes. At that scale, implicit data contracts are not a maintenance
 inconvenience — they are a catastrophic failure mode. A type mismatch at node 180,000
 is undebuggable without declared port contracts. The system produces wrong answers
-silently. This is precisely the failure mode the NodeForge thesis argues against.
+silently. This is precisely the failure mode the Idiograph thesis argues against.
 
 Two additional pressures make this non-deferrable:
 
 **1. Reviewer credibility.** Any senior engineer or pipeline architect reviewing
-NodeForge will immediately ask what happens at scale. Without port typing, the honest
+Idiograph will immediately ask what happens at scale. Without port typing, the honest
 answer is: "the graph becomes opaque and failures surface at runtime." That concedes
 the thesis in the review. Port typing is the architectural answer to that question —
 it must exist in the design, even if full enforcement lands post-Phase-8.
@@ -519,7 +519,7 @@ workstreams are open, or sequentially after Step 2. Placed last because it has
 no downstream blocking effect — Phase 8 can begin without it, though it should
 be complete before the repo is presented publicly.
 
-Gate: `nodeforge run 1706.03762 --mock` executes without API key. `.env.example`
+Gate: `idiograph run 1706.03762 --mock` executes without API key. `.env.example`
 committed. README section present.
 
 **Phase 8 begins after all three gates are passed.**
@@ -546,7 +546,7 @@ New rows to append to the constraints table in `blueprint_amendments-1.md`:
 
 | Decision | Affects | Rationale |
 |---|---|---|
-| `nodeforge run` must be demonstrable without an API key | Phase 8 onward | Covered in AMD-010. The `--mock` flag is the mechanism. The architecture already supports this via the handler registry — the flag makes it explicit at the CLI surface. |
+| `idiograph run` must be demonstrable without an API key | Phase 8 onward | Covered in AMD-010. The `--mock` flag is the mechanism. The architecture already supports this via the handler registry — the flag makes it explicit at the CLI surface. |
 | Domain implementations live under `domains/<domain>/`, never as siblings to `core/` | Phase 8 onward | Covered in AMD-011. `core/` is domain-agnostic. Domain-specific code belongs in its own namespace. The directory structure should communicate the architecture without a README. |
 | Edge type extensibility must remain open for USD arc types | Phase 8 onward | Covered in AMD-013. USD composition arc semantics (REFERENCES, INHERITS, SPECIALIZES, VARIANTS, PAYLOAD) must be addable as typed edges without modifying the Edge model. AMD-003 already enforces this; AMD-013 names the concrete future use. |
 | `summarize_intent()` must remain purely algorithmic — no LLM calls at the query layer | Phase 8 onward | Covered in AMD-013. Will be called on composition strategy subgraphs in Phase 10. An LLM call inside the query layer would undercut the determinism thesis at its foundation. |
@@ -564,4 +564,4 @@ New rows to append to the constraints table in `blueprint_amendments-1.md`:
 ---
 
 *Last updated: 2026-03*
-*Owner: NodeForge project*
+*Owner: Idiograph project*

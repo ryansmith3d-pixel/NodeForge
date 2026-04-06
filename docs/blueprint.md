@@ -1,9 +1,9 @@
-VFX NodeForge – Semantic Graph System for VFX and AI Workflows (2026 Edition)
+VFX Idiograph – Semantic Graph System for VFX and AI Workflows (2026 Edition)
 Full Curriculum Blueprint (Final Integrated Version + Strategic Layer)
 
 0. Project Overview
 0.1 Purpose
-Build a single evolving Python project (“VFX NodeForge”) that progresses from:
+Build a single evolving Python project (“VFX Idiograph”) that progresses from:
 structured CLI tools
  → typed data models
  → semantic graph system
@@ -133,7 +133,7 @@ No UI state as source of truth
 Graph must always be serializable and validatable
 2.3 Project Rules
 One repository only
-src/nodeforge/ layout
+src/idiograph/ layout
 Every phase extends existing code
 Every session produces a runnable result
 
@@ -149,7 +149,7 @@ Wrap-Up
 
 Phase 0 – Environment & Tooling Lock-in
 Goal
- Create a working NodeForge project with CLI entry point.
+ Create a working Idiograph project with CLI entry point.
 Thesis
  Remove friction early to focus on system design.
 Micro-Sessions
@@ -169,7 +169,7 @@ Thesis
  Structured data enables both pipelines and AI.
 Artifacts
 pipeline manifest JSON
-CLI commands (nodeforge stats, nodeforge workflows)
+CLI commands (idiograph stats, idiograph workflows)
 Micro-Sessions
 structured dicts
 JSON I/O
@@ -185,7 +185,7 @@ Goal
 Thesis
  Reusable systems require modular structure.
 Artifacts
-nodeforge.core
+idiograph.core
 installable package
 Micro-Sessions
 module refactor
@@ -312,7 +312,7 @@ Wrap-Up
 
 Phase 8 – Agent Integration (Accelerated Priority)
 Goal
- Expose NodeForge as deterministic tools for agents.
+ Expose Idiograph as deterministic tools for agents.
 Thesis
  Agents operate on structured systems, not prompts.
 Artifacts
@@ -339,7 +339,7 @@ Goal
 Thesis
  The system validates the argument.
 Artifacts
-full NodeForge system
+full Idiograph system
 GitHub repo
 demo
 design document + public essay
@@ -359,7 +359,7 @@ why AI needs graphs
 VFX as precedent
 
 6. Final Deliverables
-GitHub repository (NodeForge)
+GitHub repository (Idiograph)
 CLI-first system
 Query + execution + agent layers
 design document

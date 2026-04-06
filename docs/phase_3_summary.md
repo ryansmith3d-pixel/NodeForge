@@ -19,7 +19,7 @@ The dict-based graph was replaced with validated Pydantic models. The system now
 
 ## Files
 
-### `src/nodeforge/core/models.py` *(new)*
+### `src/idiograph/core/models.py` *(new)*
 ```python
 from typing import Any
 from pydantic import BaseModel, Field
@@ -61,9 +61,9 @@ class Graph(BaseModel):
         return None
 ```
 
-### `src/nodeforge/core/pipeline.py` *(updated)*
+### `src/idiograph/core/pipeline.py` *(updated)*
 ```python
-from nodeforge.core.models import Node, Edge, Graph
+from idiograph.core.models import Node, Edge, Graph
 
 SAMPLE_PIPELINE: Graph = Graph(
     name="lookdev_approval_pipeline",
@@ -84,9 +84,9 @@ SAMPLE_PIPELINE: Graph = Graph(
 )
 ```
 
-### `src/nodeforge/core/graph.py` *(updated)*
+### `src/idiograph/core/graph.py` *(updated)*
 ```python
-from nodeforge.core.models import Graph, Node, Edge
+from idiograph.core.models import Graph, Node, Edge
 
 
 def get_node(graph: Graph, node_id: str) -> Node | None:
@@ -124,17 +124,17 @@ def load_graph(data: dict) -> Graph:
     return Graph.model_validate(data)
 ```
 
-### `src/nodeforge/core/__init__.py` *(updated)*
+### `src/idiograph/core/__init__.py` *(updated)*
 ```python
-from nodeforge.core.pipeline import SAMPLE_PIPELINE
-from nodeforge.core.graph import summarize, get_node, get_edges_from, load_graph
+from idiograph.core.pipeline import SAMPLE_PIPELINE
+from idiograph.core.graph import summarize, get_node, get_edges_from, load_graph
 ```
 
-### `src/nodeforge/main.py` *(updated)*
+### `src/idiograph/main.py` *(updated)*
 ```python
 import json
 import typer
-from nodeforge.core import SAMPLE_PIPELINE, summarize, load_graph
+from idiograph.core import SAMPLE_PIPELINE, summarize, load_graph
 from pydantic import ValidationError
 
 app = typer.Typer()
@@ -154,7 +154,7 @@ def workflows():
 
 @app.command()
 def validate(path: str):
-    """Validate a graph JSON file against the NodeForge schema."""
+    """Validate a graph JSON file against the Idiograph schema."""
     try:
         with open(path) as f:
             data = json.load(f)
@@ -175,10 +175,10 @@ if __name__ == "__main__":
 
 ## Verified Working
 ```
-uv run nodeforge stats                      → pipeline statistics as JSON, identical to Phase 2
-uv run nodeforge workflows                  → full graph as JSON with typed model fields
-uv run nodeforge validate test_graph.json   → Valid — 5 nodes, 4 edges.
-uv run nodeforge validate bad_graph.json    → Validation failed: version field required
+uv run idiograph stats                      → pipeline statistics as JSON, identical to Phase 2
+uv run idiograph workflows                  → full graph as JSON with typed model fields
+uv run idiograph validate test_graph.json   → Valid — 5 nodes, 4 edges.
+uv run idiograph validate bad_graph.json    → Validation failed: version field required
 ```
 
 ## Amendments Closed

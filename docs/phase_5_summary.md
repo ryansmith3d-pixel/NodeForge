@@ -1,7 +1,7 @@
 # Phase 5 Summary — Testing, Logging, Config
 
 ## What Was Built
-The system gained a pytest test suite covering all three layers (models, graph functions, query functions), a structured logging setup scoped to the `nodeforge` namespace, and a TOML config loader. The system is now stable enough to hand to an agent without silent failure modes.
+The system gained a pytest test suite covering all three layers (models, graph functions, query functions), a structured logging setup scoped to the `idiograph` namespace, and a TOML config loader. The system is now stable enough to hand to an agent without silent failure modes.
 
 ## Project Structure
 ```
@@ -9,7 +9,7 @@ E:\projects\nodeforge
 │   pyproject.toml
 │   .python-version
 │   README.md
-│   nodeforge.toml       ← new
+│   idiograph.toml       ← new
 │
 ├───tests/               ← new
 │       conftest.py
@@ -18,7 +18,7 @@ E:\projects\nodeforge
 │       test_query.py
 │
 └───src
-    └───nodeforge
+    └───idiograph
             __init__.py
             main.py               ← updated: startup callback
             core/
@@ -41,9 +41,9 @@ E:\projects\nodeforge
 
 **`tomllib` (stdlib), no new dependency** — `tomllib` shipped in Python 3.11. Since the project targets 3.13, there is no reason to reach for `tomli` or `tomlkit`. Binary mode (`"rb"`) is required by the spec — `tomllib` will raise `TypeError` on text mode, not silently misread.
 
-**Config falls back to defaults silently** — the config loader returns `_DEFAULTS` if `nodeforge.toml` is absent. It never crashes. A missing config file is not an error; it means "use defaults." This matters for agents and CI environments where the file may not be present.
+**Config falls back to defaults silently** — the config loader returns `_DEFAULTS` if `idiograph.toml` is absent. It never crashes. A missing config file is not an error; it means "use defaults." This matters for agents and CI environments where the file may not be present.
 
-**Logger scoped to `nodeforge` namespace** — all child loggers (`nodeforge.graph`, `nodeforge.query`, etc.) inherit from the root `nodeforge` logger. A single `setup_logging()` call at startup controls the whole system. External code can set `logging.getLogger("nodeforge").setLevel(logging.DEBUG)` to get full visibility without touching application code.
+**Logger scoped to `idiograph` namespace** — all child loggers (`idiograph.graph`, `idiograph.query`, etc.) inherit from the root `idiograph` logger. A single `setup_logging()` call at startup controls the whole system. External code can set `logging.getLogger("idiograph").setLevel(logging.DEBUG)` to get full visibility without touching application code.
 
 **`setup_logging()` guard on handler duplication** — `if not _LOGGER.handlers` prevents stacked handlers when `setup_logging()` is called multiple times (common in test runs). Without this, each test session would add another handler and duplicate every log line.
 
@@ -53,14 +53,14 @@ E:\projects\nodeforge
 
 ## Files
 
-### `nodeforge.toml`
+### `idiograph.toml`
 ```toml
-[nodeforge]
+[idiograph]
 log_level = "INFO"
 default_graph = ""
 ```
 
-### `src/nodeforge/core/config.py`
+### `src/idiograph/core/config.py`
 ```python
 import tomllib
 from pathlib import Path
@@ -73,11 +73,11 @@ _DEFAULTS: dict = {
 
 def load_config(path: Path | None = None) -> dict:
     """
-    Load nodeforge.toml from the given path (or the project root by default).
+    Load idiograph.toml from the given path (or the project root by default).
     Falls back to defaults silently if the file is absent — never crashes on missing config.
     """
     if path is None:
-        path = Path("nodeforge.toml")
+        path = Path("idiograph.toml")
 
     if not path.exists():
         return dict(_DEFAULTS)
@@ -86,20 +86,20 @@ def load_config(path: Path | None = None) -> dict:
         raw = tomllib.load(f)
 
     config = dict(_DEFAULTS)
-    config.update(raw.get("nodeforge", {}))
+    config.update(raw.get("idiograph", {}))
     return config
 ```
 
-### `src/nodeforge/core/logging_config.py`
+### `src/idiograph/core/logging_config.py`
 ```python
 import logging
 
-_LOGGER = logging.getLogger("nodeforge")
+_LOGGER = logging.getLogger("idiograph")
 
 
 def setup_logging(level: str = "INFO") -> None:
     """
-    Configure the nodeforge root logger.
+    Configure the idiograph root logger.
     Safe to call multiple times — only adds a handler if none exists.
     """
     numeric_level = getattr(logging, level.upper(), logging.INFO)
@@ -115,14 +115,14 @@ def setup_logging(level: str = "INFO") -> None:
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Return a child logger under the nodeforge namespace."""
-    return logging.getLogger(f"nodeforge.{name}")
+    """Return a child logger under the idiograph namespace."""
+    return logging.getLogger(f"idiograph.{name}")
 ```
 
-### `src/nodeforge/core/graph.py`
+### `src/idiograph/core/graph.py`
 ```python
-from nodeforge.core.models import Graph, Node, Edge
-from nodeforge.core.logging_config import get_logger
+from idiograph.core.models import Graph, Node, Edge
+from idiograph.core.logging_config import get_logger
 
 _log = get_logger("graph")
 
@@ -161,11 +161,11 @@ def load_graph(data: dict) -> Graph:
     return graph
 ```
 
-### `src/nodeforge/core/query.py` *(logging additions only — full file)*
+### `src/idiograph/core/query.py` *(logging additions only — full file)*
 ```python
 import networkx as nx
-from nodeforge.core.models import Graph, Node
-from nodeforge.core.logging_config import get_logger
+from idiograph.core.models import Graph, Node
+from idiograph.core.logging_config import get_logger
 
 _log = get_logger("query")
 
@@ -298,20 +298,20 @@ def summarize_intent(graph: Graph, node_ids: list[str] | None = None) -> dict:
     }
 ```
 
-### `src/nodeforge/core/__init__.py`
+### `src/idiograph/core/__init__.py`
 ```python
-from nodeforge.core.pipeline import SAMPLE_PIPELINE
-from nodeforge.core.graph import summarize, get_node, get_edges_from, load_graph
-from nodeforge.core.config import load_config
-from nodeforge.core.logging_config import setup_logging, get_logger
+from idiograph.core.pipeline import SAMPLE_PIPELINE
+from idiograph.core.graph import summarize, get_node, get_edges_from, load_graph
+from idiograph.core.config import load_config
+from idiograph.core.logging_config import setup_logging, get_logger
 ```
 
-### `src/nodeforge/main.py`
+### `src/idiograph/main.py`
 ```python
 import json
 import typer
-from nodeforge.core import SAMPLE_PIPELINE, summarize, load_graph, load_config, setup_logging
-from nodeforge.core.query import (
+from idiograph.core import SAMPLE_PIPELINE, summarize, load_graph, load_config, setup_logging
+from idiograph.core.query import (
     get_downstream, get_upstream, topological_sort,
     find_cycles, validate_integrity, summarize_intent,
 )
@@ -343,7 +343,7 @@ def workflows():
 
 @app.command()
 def validate(path: str):
-    """Validate a graph JSON file against the NodeForge schema."""
+    """Validate a graph JSON file against the Idiograph schema."""
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
@@ -410,7 +410,7 @@ if __name__ == "__main__":
 ### `tests/conftest.py`
 ```python
 import pytest
-from nodeforge.core.models import Node, Edge, Graph
+from idiograph.core.models import Node, Edge, Graph
 
 
 @pytest.fixture
@@ -452,7 +452,7 @@ def cyclic_graph() -> Graph:
 ```python
 import pytest
 from pydantic import ValidationError
-from nodeforge.core.models import Node, Edge, Graph
+from idiograph.core.models import Node, Edge, Graph
 
 
 class TestNode:
@@ -518,7 +518,7 @@ class TestGraph:
 ```python
 import pytest
 from pydantic import ValidationError
-from nodeforge.core.graph import get_node, get_edges_from, summarize, load_graph
+from idiograph.core.graph import get_node, get_edges_from, summarize, load_graph
 
 
 class TestGetNode:
@@ -570,11 +570,11 @@ class TestLoadGraph:
 ### `tests/test_query.py`
 ```python
 import pytest
-from nodeforge.core.query import (
+from idiograph.core.query import (
     get_downstream, get_upstream, topological_sort,
     find_cycles, validate_integrity, summarize_intent,
 )
-from nodeforge.core.models import Edge, Graph, Node
+from idiograph.core.models import Edge, Graph, Node
 
 
 class TestDownstream:
@@ -678,17 +678,17 @@ class TestSummarizeIntent:
 uv run pytest tests/ -v
 → All tests pass
 
-uv run nodeforge validate test_graph.json
-10:33:00  INFO      nodeforge.graph  Loaded graph 'lookdev_approval_pipeline' — 5 nodes, 4 edges.
+uv run idiograph validate test_graph.json
+10:33:00  INFO      idiograph.graph  Loaded graph 'lookdev_approval_pipeline' — 5 nodes, 4 edges.
 Valid — 5 nodes, 4 edges.
 
-uv run nodeforge stats       → pipeline statistics as JSON (no logging output — correct)
-uv run nodeforge check       → integrity valid, no cycles
-uv run nodeforge query intent → domain: vfx, critical path and control gates present
+uv run idiograph stats       → pipeline statistics as JSON (no logging output — correct)
+uv run idiograph check       → integrity valid, no cycles
+uv run idiograph query intent → domain: vfx, critical path and control gates present
 ```
 
 ## Thesis Connection
-Tests are not incidental here — they are the enforcement mechanism for determinism. The thesis claims NodeForge behaves predictably under all inputs, including adversarial ones. Without a test suite, that is an assertion. With one, it is a verifiable property. The `test_params_are_independent` test in particular captures something subtle: a mutable default would silently corrupt node state, which is exactly the class of bug that undermines the reliability guarantees the thesis depends on.
+Tests are not incidental here — they are the enforcement mechanism for determinism. The thesis claims Idiograph behaves predictably under all inputs, including adversarial ones. Without a test suite, that is an assertion. With one, it is a verifiable property. The `test_params_are_independent` test in particular captures something subtle: a mutable default would silently corrupt node state, which is exactly the class of bug that undermines the reliability guarantees the thesis depends on.
 
 ## Next — Phase 6: Async & Orchestration
 The graph becomes executable. An async execution engine will run nodes in topological order, respecting DATA and CONTROL edges, handling partial failures, and updating node status as execution proceeds. This is where the declarative graph description becomes a live system — and where the distinction between "the graph describes execution" and "the graph performs execution" gets tested in code for the first time.

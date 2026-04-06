@@ -12,7 +12,7 @@ E:\projects\nodeforge
 │   pyproject.toml
 │   .python-version
 │   README.md
-│   nodeforge.toml
+│   idiograph.toml
 │   .env                  ← new (gitignored — contains ANTHROPIC_API_KEY)
 │
 ├───tests/
@@ -23,7 +23,7 @@ E:\projects\nodeforge
 │       test_executor.py  ← new
 │
 └───src
-    └───nodeforge
+    └───idiograph
             __init__.py
             main.py               ← updated: load_dotenv, run command
             core/
@@ -96,15 +96,15 @@ No decomposition required. All handlers are within scope.
 
 ## Files
 
-### `src/nodeforge/core/executor.py`
+### `src/idiograph/core/executor.py`
 ```python
 import asyncio
 import logging
 from typing import Callable, Any
 
-from nodeforge.core.models import Graph, Node
-from nodeforge.core.query import topological_sort, find_cycles
-from nodeforge.core.logging_config import get_logger
+from idiograph.core.models import Graph, Node
+from idiograph.core.query import topological_sort, find_cycles
+from idiograph.core.logging_config import get_logger
 
 _log = get_logger("executor")
 
@@ -210,7 +210,7 @@ def _update_node_status(node: Node, status: str) -> None:
     node.status = status
 ```
 
-### `src/nodeforge/handlers/arxiv.py`
+### `src/idiograph/handlers/arxiv.py`
 ```python
 import os
 import xml.etree.ElementTree as ET
@@ -218,7 +218,7 @@ import xml.etree.ElementTree as ET
 import httpx
 import anthropic
 
-from nodeforge.core.logging_config import get_logger
+from idiograph.core.logging_config import get_logger
 
 _log = get_logger("handlers.arxiv")
 
@@ -294,10 +294,10 @@ async def discard(params: dict, inputs: dict) -> dict:
     return {"discarded": True, "paper_id": paper_id}
 ```
 
-### `src/nodeforge/handlers/__init__.py`
+### `src/idiograph/handlers/__init__.py`
 ```python
-from nodeforge.core.executor import register_handler
-from nodeforge.handlers.arxiv import (
+from idiograph.core.executor import register_handler
+from idiograph.handlers.arxiv import (
     fetch_abstract,
     llm_call,
     evaluator,
@@ -315,9 +315,9 @@ def register_all() -> None:
     register_handler("Discard",       discard)
 ```
 
-### `src/nodeforge/pipelines/arxiv.py`
+### `src/idiograph/pipelines/arxiv.py`
 ```python
-from nodeforge.core.models import Graph, Node, Edge
+from idiograph.core.models import Graph, Node, Edge
 
 ARXIV_PIPELINE: Graph = Graph(
     name="arxiv_abstract_pipeline",
@@ -367,15 +367,15 @@ ARXIV_PIPELINE: Graph = Graph(
 )
 ```
 
-### `src/nodeforge/main.py`
+### `src/idiograph/main.py`
 ```python
 import json
 import asyncio
 import typer
 from dotenv import load_dotenv
-from nodeforge.core import SAMPLE_PIPELINE, summarize, load_graph, load_config, setup_logging
-from nodeforge.core.executor import execute_graph
-from nodeforge.core.query import (
+from idiograph.core import SAMPLE_PIPELINE, summarize, load_graph, load_config, setup_logging
+from idiograph.core.executor import execute_graph
+from idiograph.core.query import (
     get_downstream, get_upstream, topological_sort,
     find_cycles, validate_integrity, summarize_intent,
 )
@@ -408,7 +408,7 @@ def workflows():
 
 @app.command()
 def validate(path: str):
-    """Validate a graph JSON file against the NodeForge schema."""
+    """Validate a graph JSON file against the Idiograph schema."""
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
@@ -439,8 +439,8 @@ def check():
 @app.command()
 def run(paper_id: str = typer.Argument(..., help="arXiv paper ID, e.g. 2401.00001")):
     """Execute the arXiv pipeline for a given paper ID."""
-    from nodeforge.handlers import register_all
-    from nodeforge.pipelines.arxiv import ARXIV_PIPELINE
+    from idiograph.handlers import register_all
+    from idiograph.pipelines.arxiv import ARXIV_PIPELINE
 
     register_all()
 
@@ -525,7 +525,7 @@ The arXiv pipeline executed end-to-end against real I/O.
 uv run pytest tests/ -v
 → 44 passed
 
-uv run nodeforge run 1706.03762
+uv run idiograph run 1706.03762
 → fetch: SUCCESS (Attention Is All You Need, 8 authors)
 → claims: SUCCESS (bullet list of concrete claims extracted)
 → evaluate: SUCCESS (score 0.6, threshold 0.4, 3/5 keywords matched)

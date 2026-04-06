@@ -11,7 +11,7 @@ E:\projects\nodeforge
 │   README.md
 │
 └───src
-    └───nodeforge
+    └───idiograph
             __init__.py
             main.py          ← updated: query subcommands + check command
             core/
@@ -26,7 +26,7 @@ E:\projects\nodeforge
 
 **`networkx` as the graph math layer** — not hand-rolled BFS. `nx.descendants`, `nx.ancestors`, `nx.topological_sort`, and `nx.simple_cycles` are battle-tested. Writing equivalents from scratch would be noise at this stage and a maintenance liability later. More importantly, networkx is a production-standard library that any downstream agent or tool will recognize.
 
-**`_build_nx_graph()` as an internal helper** — every query function converts the NodeForge `Graph` into a `nx.DiGraph` internally. This is deliberately not exposed in the public API. The networkx graph is a transient analysis artifact, not a second source of truth. The NodeForge `Graph` model remains the canonical representation.
+**`_build_nx_graph()` as an internal helper** — every query function converts the Idiograph `Graph` into a `nx.DiGraph` internally. This is deliberately not exposed in the public API. The networkx graph is a transient analysis artifact, not a second source of truth. The Idiograph `Graph` model remains the canonical representation.
 
 **`downstream`/`upstream` return unordered lists** — `nx.descendants` and `nx.ancestors` return sets. The order of results from these functions is not meaningful. `topological_sort` is the only traversal where order matters, and it is deterministic. If ordered display becomes necessary later (e.g. sorted by topo position), that is a Phase 7 concern.
 
@@ -38,26 +38,26 @@ E:\projects\nodeforge
 
 **`validate_integrity()` lives in `query.py`, not `models.py`** — Pydantic validates models in isolation. Cross-object constraints (does this edge's target actually exist?) require graph-level visibility. That belongs in the analysis layer, not the schema layer. This was the design rationale behind AMD-005.
 
-**`query` is a Typer sub-app** — `app.add_typer(query_app, name="query")` gives a clean `nodeforge query <subcommand>` namespace without polluting the top-level command list. Scales naturally as more query types are added.
+**`query` is a Typer sub-app** — `app.add_typer(query_app, name="query")` gives a clean `idiograph query <subcommand>` namespace without polluting the top-level command list. Scales naturally as more query types are added.
 
 ## Amendments Closed
 
-**AMD-002** — `summarize_intent(graph, node_ids=None)` implemented in `query.py`. Exposed via `nodeforge query intent`. Returns structured JSON describing domain, critical path, control gates, and failure state. Purely algorithmic.
+**AMD-002** — `summarize_intent(graph, node_ids=None)` implemented in `query.py`. Exposed via `idiograph query intent`. Returns structured JSON describing domain, critical path, control gates, and failure state. Purely algorithmic.
 
-**AMD-005** — `validate_integrity(graph)` implemented in `query.py`. Catches dangling edge references (source or target ID not present in node list). Returns structured result with specific errors identified. Exposed via `nodeforge check`.
+**AMD-005** — `validate_integrity(graph)` implemented in `query.py`. Catches dangling edge references (source or target ID not present in node list). Returns structured result with specific errors identified. Exposed via `idiograph check`.
 
 ## Files
 
-### `src/nodeforge/core/query.py` *(new)*
+### `src/idiograph/core/query.py` *(new)*
 ```python
 import networkx as nx
-from nodeforge.core.models import Graph, Node
+from idiograph.core.models import Graph, Node
 
 
 # ── Internal helper ──────────────────────────────────────────────────────────
 
 def _build_nx_graph(graph: Graph) -> nx.DiGraph:
-    """Convert a NodeForge Graph into a networkx DiGraph for analysis."""
+    """Convert a Idiograph Graph into a networkx DiGraph for analysis."""
     dg = nx.DiGraph()
     for node in graph.nodes:
         dg.add_node(node.id)
@@ -205,12 +205,12 @@ def summarize_intent(graph: Graph, node_ids: list[str] | None = None) -> dict:
     }
 ```
 
-### `src/nodeforge/main.py` *(updated)*
+### `src/idiograph/main.py` *(updated)*
 ```python
 import json
 import typer
-from nodeforge.core import SAMPLE_PIPELINE, summarize, load_graph
-from nodeforge.core.query import (
+from idiograph.core import SAMPLE_PIPELINE, summarize, load_graph
+from idiograph.core.query import (
     get_downstream,
     get_upstream,
     topological_sort,
@@ -239,7 +239,7 @@ def workflows():
 
 @app.command()
 def validate(path: str):
-    """Validate a graph JSON file against the NodeForge schema."""
+    """Validate a graph JSON file against the Idiograph schema."""
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
@@ -305,27 +305,27 @@ if __name__ == "__main__":
 
 ## Verified Working
 ```
-uv run nodeforge check
+uv run idiograph check
 → integrity valid, no cycles
 
-uv run nodeforge query downstream node_01
+uv run idiograph query downstream node_01
 → ['node_05', 'node_04', 'node_02', 'node_03'] (unordered — correct)
 
-uv run nodeforge query upstream node_05
+uv run idiograph query upstream node_05
 → ['node_03', 'node_02', 'node_01', 'node_04'] (unordered — correct)
 
-uv run nodeforge query topo
+uv run idiograph query topo
 → ['node_01', 'node_02', 'node_03', 'node_04', 'node_05'] (deterministic)
 
-uv run nodeforge query intent
+uv run idiograph query intent
 → domain: vfx, critical_path: [node_01..node_05], control_gates: [node_03]
 
-uv run nodeforge --help
+uv run idiograph --help
 → stats, workflows, validate, check, query all listed
 ```
 
 ## Thesis Connection
-A graph that can't be questioned is just a data format. This phase is what separates NodeForge from a structured JSON file. `summarize_intent` in particular demonstrates the core claim: explicit semantic structure enables reasoning that no amount of probabilistic inference over raw node lists could replicate. An agent can call this function and receive a meaningful answer to "what does this subgraph do and where might it fail?" — without inspecting a single node individually.
+A graph that can't be questioned is just a data format. This phase is what separates Idiograph from a structured JSON file. `summarize_intent` in particular demonstrates the core claim: explicit semantic structure enables reasoning that no amount of probabilistic inference over raw node lists could replicate. An agent can call this function and receive a meaningful answer to "what does this subgraph do and where might it fail?" — without inspecting a single node individually.
 
 ## Next — Phase 5: Testing, Logging, Config
 The system now has enough structure to be worth protecting. Phase 5 adds `pytest` coverage for the core and query layers, structured logging, and config loading. These are not glamorous — but they are what makes the system trustworthy enough to hand to an agent in Phase 8. An untested system is not a safe tool interface.

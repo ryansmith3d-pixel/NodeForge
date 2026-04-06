@@ -1,4 +1,4 @@
-# NodeForge – Architectural Debt Strategy: State Management Migration
+# Idiograph – Architectural Debt Strategy: State Management Migration
 
 ## Document Purpose
 
@@ -45,7 +45,7 @@ emerge are:
   tool calls without re-sending the full graph each time
 
 These are not hypothetical. They are the exact problems that appear the moment
-NodeForge receives more than one concurrent request.
+Idiograph receives more than one concurrent request.
 
 ### Honest Scope of Remediation
 
@@ -188,7 +188,7 @@ def register_graph_from_file(graph_id: str, path: Path) -> None:
 A `save` CLI command writes any graph to disk by ID:
 
 ```
-nodeforge save arxiv --output ./graphs/arxiv.json
+idiograph save arxiv --output ./graphs/arxiv.json
 ```
 
 **Done when:** a graph can be saved to disk, re-registered from that file, and
@@ -201,13 +201,13 @@ executed with identical results. Round-trip test passes.
 ### Step 5 — FastAPI layer (if forcing function is met)
 
 **What changes:** a FastAPI application is added as a separate entry point
-(`src/nodeforge/api.py`). Routes call the same registry, loaders, and executor
+(`src/idiograph/api.py`). Routes call the same registry, loaders, and executor
 that the CLI uses. The CLI is not modified.
 
 ```python
 from fastapi import FastAPI
-from nodeforge.core.executor import execute_graph
-from nodeforge.core.registry import load_graph_by_id
+from idiograph.core.executor import execute_graph
+from idiograph.core.registry import load_graph_by_id
 
 api = FastAPI()
 
@@ -280,5 +280,5 @@ triggered; constraint documented if not.
 ---
 
 *Created: 2026-03*
-*Owner: NodeForge project*
+*Owner: Idiograph project*
 *Trigger: Phase 7 close — evaluate forcing function and schedule or defer accordingly*

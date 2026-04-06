@@ -1,4 +1,4 @@
-# NodeForge – Blueprint Amendments & Decision Log (Addendum 2)
+# Idiograph – Blueprint Amendments & Decision Log (Addendum 2)
 
 Continues from `blueprint_amendments-1.md`.
 Last amendment in previous log: AMD-005.
@@ -21,7 +21,7 @@ First, VFX production handlers require DCC tool dependencies (Arnold, USD, Hydra
 would make Phase 6 primarily about installation and integration rather than execution
 architecture. That inverts the priority.
 
-Second, and more importantly: NodeForge is not a VFX tool. It is a proof-of-concept
+Second, and more importantly: Idiograph is not a VFX tool. It is a proof-of-concept
 system for the thesis. Using VFX-specific handler implementations risks making the system
 look domain-specific rather than domain-agnostic. The thesis claims the architecture
 works for any production pipeline — the demo domain should demonstrate that, not
@@ -118,9 +118,9 @@ Prefect uses it for tasks. The pattern is well-understood and carries no archite
 risk.
 
 Change: The Phase 6 executor is implemented with a handler registry. Handler
-implementations (arXiv domain) live in `src/nodeforge/handlers/arxiv.py` and are
-registered in `src/nodeforge/handlers/__init__.py`. The executor lives in
-`src/nodeforge/core/executor.py` and imports nothing from the handlers module.
+implementations (arXiv domain) live in `src/idiograph/handlers/arxiv.py` and are
+registered in `src/idiograph/handlers/__init__.py`. The executor lives in
+`src/idiograph/core/executor.py` and imports nothing from the handlers module.
 
 Done when: The executor can be instantiated and run with stub handlers registered
 programmatically, independently of whether the arXiv handlers are present. Verified by
@@ -138,7 +138,7 @@ own subsystems. If a handler requires 200 lines to function correctly, one of tw
 is true: either the handler is doing too much (the node should be decomposed into
 multiple nodes), or the implementation detail has become the project.
 
-Either outcome undermines the thesis. NodeForge is an architecture demonstration, not
+Either outcome undermines the thesis. Idiograph is an architecture demonstration, not
 a pipeline tool. Handler implementations are evidence that the architecture works under
 real conditions — they are not the system.
 
@@ -198,7 +198,7 @@ Reason: The current module-level graph state model (`SAMPLE_PIPELINE`, `ARXIV_PI
 imported directly by command functions) is incompatible with stateless HTTP serving and
 concurrent agent requests. This was the correct decision for Phases 0–6: the CLI is a
 single-process, single-command model and the constraint is invisible under that execution
-model. It becomes a real liability the moment NodeForge handles concurrent requests —
+model. It becomes a real liability the moment Idiograph handles concurrent requests —
 two agents mutating the same graph object simultaneously produces undefined behavior,
 and there is no mechanism for graph isolation, persistence, or session state across calls.
 
@@ -230,4 +230,4 @@ New row to append to the constraints table in `blueprint_amendments-1.md`:
 ---
 
 *Last updated: 2026-03*  
-*Owner: NodeForge project*
+*Owner: Idiograph project*

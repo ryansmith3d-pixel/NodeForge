@@ -11,7 +11,7 @@ E:\projects\nodeforge
 │   README.md
 │
 └───src
-    └───nodeforge
+    └───idiograph
             __init__.py
             main.py          ← CLI only, all logic removed
             pipeline.py      ← can be deleted (superseded by core/)
@@ -24,20 +24,20 @@ E:\projects\nodeforge
 ## Key Decisions
 
 - **CLI is now dumb** — `main.py` only imports and formats. No loops, no logic. This is permanent: the CLI is a view on core, never the owner of behavior.
-- **`core/` is the importable surface** — anything that needs to operate on a graph (tests, agents, other modules) imports from `nodeforge.core`. The entry point is irrelevant to that.
+- **`core/` is the importable surface** — anything that needs to operate on a graph (tests, agents, other modules) imports from `idiograph.core`. The entry point is irrelevant to that.
 - **`graph.py` functions take a `graph: dict` argument** — they are stateless and pure. They do not own or store the graph. This is intentional: the same functions will work on any valid graph dict, whether it came from a file, a fixture, or an agent mutation. Prepares cleanly for Phase 3 where the dict becomes a typed model.
 - **`core/__init__.py` controls the public API** — only what is explicitly imported there is considered stable. Internal structure of `core/` can change without breaking callers.
 - **`get_node` returns `dict | None`** — not an exception on miss. Agents querying for a node that doesn't exist should get a clean null, not a crash.
 
 ## Files
 
-### `src/nodeforge/core/__init__.py`
+### `src/idiograph/core/__init__.py`
 ```python
-from nodeforge.core.pipeline import SAMPLE_PIPELINE
-from nodeforge.core.graph import summarize, get_node, get_edges_from
+from idiograph.core.pipeline import SAMPLE_PIPELINE
+from idiograph.core.graph import summarize, get_node, get_edges_from
 ```
 
-### `src/nodeforge/core/pipeline.py`
+### `src/idiograph/core/pipeline.py`
 ```python
 SAMPLE_PIPELINE: dict = {
     "name": "lookdev_approval_pipeline",
@@ -83,7 +83,7 @@ SAMPLE_PIPELINE: dict = {
 }
 ```
 
-### `src/nodeforge/core/graph.py`
+### `src/idiograph/core/graph.py`
 ```python
 def get_node(graph: dict, node_id: str) -> dict | None:
     """Return a node by id, or None if not found."""
@@ -123,11 +123,11 @@ def summarize(graph: dict) -> dict:
     }
 ```
 
-### `src/nodeforge/main.py`
+### `src/idiograph/main.py`
 ```python
 import json
 import typer
-from nodeforge.core import SAMPLE_PIPELINE, summarize
+from idiograph.core import SAMPLE_PIPELINE, summarize
 
 app = typer.Typer()
 
@@ -150,9 +150,9 @@ if __name__ == "__main__":
 
 ## Verified Working
 ```
-uv run nodeforge stats      → identical JSON output as Phase 1
-uv run nodeforge workflows  → identical JSON output as Phase 1
-uv run python -c "from nodeforge.core import get_node, SAMPLE_PIPELINE; print(get_node(SAMPLE_PIPELINE, 'node_03'))"
+uv run idiograph stats      → identical JSON output as Phase 1
+uv run idiograph workflows  → identical JSON output as Phase 1
+uv run python -c "from idiograph.core import get_node, SAMPLE_PIPELINE; print(get_node(SAMPLE_PIPELINE, 'node_03'))"
 → {'id': 'node_03', 'type': 'ShaderValidate', 'params': {'rules': ['energy_conservation', 'normal_range']}, 'status': 'PENDING'}
 ```
 
