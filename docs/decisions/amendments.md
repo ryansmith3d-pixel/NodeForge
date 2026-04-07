@@ -1,11 +1,306 @@
-# Idiograph – Blueprint Amendments & Decision Log (Addendum 3)
+# Idiograph – Blueprint Amendments & Decision Log
 
-Continues from `blueprint_amendments_2.md`.
-Last amendment in previous log: AMD-009.
+This document tracks amendments to the original Blueprint, and the reasoning behind each one.
+The Blueprint itself is not modified — this file sits alongside it as the living layer.
+
+Each entry records: what changes, which phase it affects, why it was decided, and what "done" looks like.
+
+---
+
+## Amendment Format
+
+```
+### AMD-[N] — [Short Title]
+Affects: Phase X
+Status: PENDING | ACTIVE | COMPLETE
+Decided: [date or session]
+Reason: [why]
+Change: [what specifically is added or altered]
+Done when: [concrete completion criterion]
+```
 
 ---
 
 ## Amendments
+
+---
+
+### AMD-001 — Pydantic Field Descriptions as Agent Documentation
+Affects: Phase 3 (Data Models & Typing)  
+Status: COMPLETE  
+Decided: 2026-03  
+Reason: An agent calling a tool like `update_node()` needs to understand what each parameter
+means without a human writing a wrapper to explain it. `Field(description="...")` on every
+model field turns the schema itself into agent-readable documentation. Costs nothing in Phase 3,
+pays dividends in Phase 8 when tool interfaces are generated from those schemas.  
+Change: Every Pydantic field on `Node`, `Edge`, and `Graph` models must include a
+`description=` argument written for an agent reader, not just a human one. Treat it like
+docstrings for tools, not comments for developers.  
+Done when: All Phase 3 model fields have `Field(description="...")` and the JSON Schema
+output (via `model.model_json_schema()`) reads as a self-contained agent manual.
+
+---
+
+### AMD-002 — Semantic Intent Summary Tool
+Affects: Phase 4.5 (Graph Query & Analysis)  
+Status: PENDING  
+Decided: 2026-03  
+Reason: Phase 4.5 plans traversal, query, and cycle detection — all structural operations.
+What's missing is a tool that answers a different kind of question: "what does this subgraph
+*do*?" An LLM cannot reason effectively over a raw 1000-node graph. It needs a summarized,
+intent-oriented view. This is distinct from `summarize()` (which is statistics) — it's a
+semantic description oriented toward agent reasoning and decision-making.  
+Change: Add a `summarize_intent(graph, subgraph_ids=None)` function to the query layer.
+Output is a structured dict (JSON-serializable) describing: what the subgraph computes,
+its domain (VFX / AI / mixed), its critical path, and any failure points or bottlenecks.
+Expose via CLI as `idiograph query intent`.  
+Done when: An agent can call `summarize_intent()` on a subgraph and receive a structured
+response that meaningfully answers "what does this do and where might it fail?" without
+needing to inspect individual nodes.
+
+---
+
+### AMD-003 — Edge Type Must Be Extensible, Not a Closed Enum
+Affects: Phase 3 (Data Models & Typing)  
+Status: COMPLETE  
+Decided: 2026-03  
+Reason: Phase 10 requires causal edge semantics beyond DATA and CONTROL — specifically
+MODULATES, DRIVES, OCCLUDES, EMITS, and PROJECTS_TO. A closed `Literal` or `Enum` on
+the `Edge` model would require a breaking change to accommodate these. The fix is trivial
+in Phase 3 but expensive to retrofit later.  
+Change: The `type` field on the `Edge` model must be defined as an open string (`str`),
+not a closed `Literal["DATA", "CONTROL"]` or Python `Enum`. Validation of known types
+can still be documented via `Field(description="...")` and enforced in a validator if
+desired, but the field itself must accept arbitrary string values to remain extensible.  
+Done when: The `Edge` model accepts "DATA", "CONTROL", and any future string type without
+a code change to the model definition. Verified by a test that constructs an edge with
+type "MODULATES" and confirms it passes validation.
+
+---
+
+### AMD-004 — MCP as Explicit Implementation Target for Phase 8
+Affects: Phase 8 (Agent Integration)  
+Status: PENDING  
+Decided: 2026-03  
+Reason: The Blueprint says "integrate with LLM frameworks" — MCP (Model Context Protocol)
+is now the dominant open standard for exactly this. Naming it explicitly means Phase 8 has
+a concrete delivery target rather than a vague integration goal. MCP means any agent
+(Claude, GPT, local models) can connect to Idiograph without bespoke adapters. This also
+strengthens the thesis demo: you're not showing a Claude-specific tool, you're showing a
+standards-compliant agent-operable system.  
+Change: Phase 8 delivery target is an MCP Server wrapping Idiograph's core tool interfaces.
+Tools exposed via MCP: `get_node`, `get_edges_from`, `update_node`, `summarize_intent`,
+`validate_graph`, `execute_graph` (once Phase 6 is complete). The MCP server is the
+proof-of-concept artifact for the thesis — not just an integration detail.  
+Done when: A Claude agent (or equivalent) can connect to the Idiograph MCP server,
+inspect a graph, modify a node parameter, and re-validate — with no human-written adapter
+code between the agent and the graph.
+
+---
+
+### AMD-005 — Graph-Level Referential Integrity Validation
+Affects: Phase 4.5 (Graph Query & Analysis)  
+Status: PENDING  
+Decided: 2026-03  
+Reason: Pydantic validates each model in isolation. The `Edge` model has no visibility into
+the node list, so an edge referencing a non-existent node ID passes schema validation
+silently. This is not a Phase 3 problem — the model layer is not the right place to enforce
+cross-object constraints. But it becomes a real problem in Phase 4.5 when traversal follows
+edges to nodes that don't exist, producing silent `None` returns or unexpected query behavior.  
+Change: Add a graph-level integrity check function — `validate_integrity(graph)` — to the
+query/analysis layer in Phase 4.5. It must verify that every `source` and `target` ID on
+every edge corresponds to a node that exists in the graph. Returns a structured result
+listing any dangling edge references. Expose via CLI as part of the `validate` command or
+as a separate `idiograph check` command.  
+Done when: A graph containing an edge that references a non-existent node ID is caught and
+reported with the specific edge and missing node ID identified. Clean graphs pass silently.
+
+---
+
+### AMD-006 — arXiv Pipeline as Phase 6 Demo Domain
+Affects: Phase 6 (Async & Orchestration)  
+Status: ACTIVE  
+Decided: 2026-03  
+Reason: The Blueprint describes Phase 6 as making the graph executable, but does not
+specify what executes. The original intent implied VFX handlers — `ShaderValidate`,
+`RenderComparison`, etc. — operating on production assets. Two problems with that:
+
+First, VFX production handlers require DCC tool dependencies (Arnold, USD, Hydra) that
+would make Phase 6 primarily about installation and integration rather than execution
+architecture. That inverts the priority.
+
+Second, and more importantly: Idiograph is not a VFX tool. It is a proof-of-concept
+system for the thesis. Using VFX-specific handler implementations risks making the system
+look domain-specific rather than domain-agnostic. The thesis claims the architecture
+works for any production pipeline — the demo domain should demonstrate that, not
+contradict it.
+
+The selected demo domain is an **arXiv abstract processing pipeline** using the public
+arXiv API (no key required). This domain was chosen because:
+
+- Data is real and free — no invented fixtures
+- Natural pipeline structure: fetch → extract → evaluate → route → summarize
+- The LLM node adds genuine value, not decoration — claim extraction from academic
+  abstracts is a task with real variance and real failure modes
+- The content domain (AI and graphics research) is directly relevant to the thesis
+  narrative — processing AI research papers using an AI pipeline demonstrates the
+  argument without any rhetorical overhead. The demo is self-referential in a useful way.
+- No new dependencies beyond what Phase 8 already requires (Anthropic API)
+
+The pipeline structure:
+
+```
+FetchAbstract → LLMCall (extract claims) → Evaluator → Router
+                                                          ├── LLMCall (technical summary)
+                                                          └── Discard
+```
+
+Node responsibilities:
+- `FetchAbstract` — hits arXiv API, returns structured abstract data. Real network I/O
+  that fails realistically on bad IDs, network errors, or malformed responses.
+- `LLMCall (claims)` — extracts concrete, falsifiable claims from the abstract. Output
+  variance is intentional — the evaluator must handle both crisp and vague abstracts.
+- `Evaluator` — scores claims against criteria defined in `params`, not hardcoded in
+  logic. Threshold also lives in params. An agent can modify both without touching code.
+- `Router` — activates one downstream branch via CONTROL edges based on evaluator output.
+  The routing decision is preserved in graph state, not lost in an if/else.
+- `LLMCall (summary)` — produces a technical summary for papers that pass evaluation.
+- `Discard` — a no-op node that records the rejection. The graph preserves the decision
+  trail even for dead ends.
+
+The node type names carry VFX pipeline semantics where appropriate (e.g. `Evaluator`
+maps conceptually to `ShaderValidate` — a quality gate with defined criteria). The
+handler implementations are domain-specific, but the graph structure is identical.
+
+Change: Phase 6 implementation uses the arXiv pipeline as its primary execution demo.
+VFX node types remain in the schema and sample pipeline. The executor is not
+VFX-specific. Handler implementations for the arXiv domain live in a separate module
+and are registered via the handler registry (see AMD-007).
+
+Done when: The arXiv pipeline graph executes end-to-end via the Phase 6 executor,
+with at least one realistic failure demonstrated (bad paper ID, evaluator threshold
+not met, LLM output that fails parsing) and that failure surfaced legibly in graph state.
+
+---
+
+### AMD-007 — Handler Registry Pattern for Executor
+Affects: Phase 6 (Async & Orchestration)  
+Status: ACTIVE  
+Decided: 2026-03  
+Reason: The execution engine must remain abstract. If the executor contains references
+to specific handler implementations (arXiv, LLM calls, etc.), it becomes coupled to
+those implementations and loses the property the thesis depends on: that the graph
+architecture is domain-agnostic.
+
+The standard solution for this class of problem is a handler registry — a mapping from
+node type strings to async handler functions. The executor looks up a handler by
+`node.type`, calls it with `(params, inputs)`, and returns the output dict. The executor
+never imports handler modules directly.
+
+```python
+# Executor sees only this interface
+HANDLERS: dict[str, Callable] = {}
+
+def register_handler(node_type: str, fn: Callable) -> None:
+    HANDLERS[node_type] = fn
+
+async def execute_node(node: Node, inputs: dict) -> dict:
+    handler = HANDLERS.get(node.type)
+    if handler is None:
+        raise ValueError(f"No handler registered for node type '{node.type}'")
+    return await handler(node.params, inputs)
+```
+
+Handler implementations are registered at application startup, not imported into the
+executor. This means:
+
+- The executor can be tested with stub handlers independently of real implementations
+- New node types require no changes to the executor — only a new registration
+- The same executor runs VFX handlers, AI handlers, or any future domain without
+  modification
+- An agent operating on the graph never needs to know what the handler does — only
+  what the node type expects as input and produces as output
+
+This is a standard plugin/dispatch pattern. Apache Airflow uses it for operators.
+Prefect uses it for tasks. The pattern is well-understood and carries no architectural
+risk.
+
+Change: The Phase 6 executor is implemented with a handler registry. Handler
+implementations (arXiv domain) live in `src/idiograph/handlers/arxiv.py` and are
+registered in `src/idiograph/handlers/__init__.py`. The executor lives in
+`src/idiograph/core/executor.py` and imports nothing from the handlers module.
+
+Done when: The executor can be instantiated and run with stub handlers registered
+programmatically, independently of whether the arXiv handlers are present. Verified by
+tests that register mock handlers and confirm execution order, data flow, and failure
+handling without any real I/O.
+
+---
+
+### AMD-008 — Handler Scope Constraint (30-Line Business Logic Rule)
+Affects: Phase 6 onward  
+Status: ACTIVE  
+Decided: 2026-03  
+Reason: There is a real risk in Phase 6 that handler implementations grow into their
+own subsystems. If a handler requires 200 lines to function correctly, one of two things
+is true: either the handler is doing too much (the node should be decomposed into
+multiple nodes), or the implementation detail has become the project.
+
+Either outcome undermines the thesis. Idiograph is an architecture demonstration, not
+a pipeline tool. Handler implementations are evidence that the architecture works under
+real conditions — they are not the system.
+
+The 30-line constraint applies to **business logic only** — the core computation a
+handler performs. Error handling, logging, and type coercion are necessary for the system
+to behave correctly at runtime and are not counted toward this limit. A handler that
+requires significant error handling around a trivial core operation is not a scoping
+violation; it is responsible production code.
+
+The constraint is a **code review flag**, not a hard tooling gate. When a handler's
+business logic approaches or exceeds 30 lines, the correct response is to stop and ask
+whether the node is correctly scoped. The answer to that question is itself a
+thesis-relevant finding: one of the architectural properties of a well-designed semantic
+graph is that nodes are small, composable, and independently replaceable. A handler
+whose logic cannot be expressed concisely is a signal that the node boundary is in the
+wrong place.
+
+Change: Handler business logic in Phase 6 (and subsequent phases) should not exceed
+30 lines. If it does, decompose the node in the graph rather than extend the handler.
+Reviewed at each phase post-mortem by convention, not automated tooling.
+
+Done when: All Phase 6 handler implementations are reviewed at post-mortem. Any handler
+whose business logic approached or exceeded the limit is noted, with an explanation of
+whether the response was decomposition, justified exception, or a flag for later
+refactoring.
+
+---
+
+### AMD-009 — State Management Migration Strategy
+Affects: Phase 7 / Pre-Phase 8 (conditional)  
+Status: PENDING — awaiting forcing function evaluation at Phase 7 close  
+Decided: 2026-03  
+Reason: The current module-level graph state model (`SAMPLE_PIPELINE`, `ARXIV_PIPELINE`
+imported directly by command functions) is incompatible with stateless HTTP serving and
+concurrent agent requests. This was the correct decision for Phases 0–6: the CLI is a
+single-process, single-command model and the constraint is invisible under that execution
+model. It becomes a real liability the moment Idiograph handles concurrent requests —
+two agents mutating the same graph object simultaneously produces undefined behavior,
+and there is no mechanism for graph isolation, persistence, or session state across calls.
+
+Remediation is a defined 5-step strangler fig migration documented in
+`state_management_migration.md`. It is non-trivial (4–5 focused micro-sessions) and
+should not be confused with "adding FastAPI" (a surface-level description of Step 5 only).
+
+The forcing function: this migration is required before Phase 8 begins **only if** the
+MCP server requires HTTP/SSE transport (rather than stdio), a web demo is required, or
+multiple graphs must be managed simultaneously. If none of those conditions are met,
+the constraint remains a documented liability and the migration is deferred indefinitely.  
+Change: Evaluate forcing function at Phase 7 close. If triggered, execute the 5-step
+migration (extract loaders → graph registry → executor isolation test → JSON persistence
+→ FastAPI layer) before Phase 8 implementation begins. Full migration detail in
+`state_management_migration.md`.  
+Done when: Forcing function evaluated at Phase 7 close. Migration executed if triggered;
+constraint documented and deferred if not.
 
 ---
 
@@ -296,8 +591,7 @@ Done when: Phase 10 proceeds in two sequential milestones:
 
 ---
 
-
-## AMD-014 — Port Typing and Type Registry
+### AMD-014 — Port Typing and Type Registry
 
 Affects: Schema (immediate) — enforcement (post-Phase-8 build target)
 Status: PENDING
@@ -305,7 +599,7 @@ Decided: 2026-03
 
 ---
 
-### Reason
+#### Reason
 
 Idiograph's current schema connects nodes by ID. Edges carry no type information.
 Ports are implicit: a node's inputs and outputs are inferred from params and
@@ -335,7 +629,7 @@ composition seam. Typed ports with a type registry are the structural solution.
 
 ---
 
-### Design model
+#### Design model
 
 The Houdini/Katana port model is the correct reference architecture:
 
@@ -364,7 +658,7 @@ to retrieve the type registry as a first-class graph object.
 
 ---
 
-### Schema changes — immediate (optional fields, no enforcement yet)
+#### Schema changes — immediate (optional fields, no enforcement yet)
 
 Add to **Node schema**:
 
@@ -408,7 +702,7 @@ is attached yet.
 
 ---
 
-### Enforcement — post-Phase-8 build target
+#### Enforcement — post-Phase-8 build target
 
 Full port validation is a discrete build target after Phase 8 (MCP integration)
 is complete. It is not a Phase 10 stretch goal. It is a credibility requirement
@@ -432,7 +726,7 @@ is a refinement, not a gate.
 
 ---
 
-### Subgraph implications
+#### Subgraph implications
 
 A SubgraphNode (not yet built) wraps an inner graph. Its external ports are the
 re-exported ports of its internal boundary nodes. The internal graph is fully
@@ -445,7 +739,7 @@ navigate by contract, not by inspection. The contract is the graph schema.
 
 ---
 
-### Architectural constraints added
+#### Architectural constraints added
 
 | Decision | Affects | Rationale |
 |---|---|---|
@@ -457,7 +751,7 @@ navigate by contract, not by inspection. The contract is the graph schema.
 
 ---
 
-### Open questions added
+#### Open questions added
 
 | Question | Raised | Notes |
 |---|---|---|
@@ -467,12 +761,7 @@ navigate by contract, not by inspection. The contract is the graph schema.
 
 ---
 
-*Amendment: AMD-014*
-*Follows: AMD-013*
-*Last updated: 2026-03*
-
-
-## AMD-015 — Pre-Phase-8 Execution Sequence
+### AMD-015 — Pre-Phase-8 Execution Sequence
 
 Affects: AMD-010, AMD-011, AMD-014 (sequencing only — no schema or code changes)
 Status: PENDING
@@ -480,7 +769,7 @@ Decided: 2026-03
 
 ---
 
-### Reason
+#### Reason
 
 AMD-014 inserted a new schema work item into a sequence that previously contained
 only AMD-011 and AMD-010. The correct ordering is not obvious from reading the
@@ -489,7 +778,7 @@ survives session boundaries and can be executed without reconstruction.
 
 ---
 
-### Sequence
+#### Sequence
 
 **Step 1 — AMD-011: Domain-first directory restructure**
 
@@ -526,7 +815,7 @@ committed. README section present.
 
 ---
 
-### Summary table
+#### Summary table
 
 | Order | Amendment | Blocks | Can parallelize with |
 |---|---|---|---|
@@ -536,32 +825,49 @@ committed. README section present.
 
 ---
 
-*Amendment: AMD-015*
-*Follows: AMD-014*
-*Last updated: 2026-03*
-
-## Architectural Constraints Log — Additions
-
-New rows to append to the constraints table in `blueprint_amendments-1.md`:
+## Architectural Constraints Log
 
 | Decision | Affects | Rationale |
 |---|---|---|
+| Edge `type` must be an open/extensible string, not a closed enum | Phase 3 onward | Covered in AMD-003. Phase 10 requires causal edge types (MODULATES, DRIVES, OCCLUDES, EMITS, PROJECTS_TO). A closed enum would require breaking changes. |
+| Node domain (VFX / AI / rendering) is metadata only, never a structural constraint | Phase 3 onward | Phase 10 rendering nodes must fit the same architecture without special-casing. Domain is a label for query filtering, not a type gate. |
+| Content-addressed caching preferred over dirty flagging | Phase 6+ | Hash each node's params + input hashes as the cache key. Stateless, fits JSON-serializable graph, reinforces determinism thesis. Event sourcing is a secondary option for agent audit trails only. |
+| Idiograph is not a DCC adapter | All phases | The system is an independent semantic graph — not a Houdini plugin or a wrapper for proprietary tools. Agent integration targets the Idiograph graph directly, not downstream software. |
+| File I/O must specify UTF-8 encoding explicitly | Phase 3 onward | Windows default encoding is cp1252. Any open() call on a JSON file without encoding="utf-8" will silently misread non-ASCII characters. All file reads and writes in Idiograph must specify encoding explicitly. |
+| Executor must not import handler modules directly | Phase 6 onward | Covered in AMD-007. The executor is domain-agnostic. Handler registration happens at startup, not at import time. Keeps the core layer independent of implementation details. |
+| Handler business logic is capped at 30 lines | Phase 6 onward | Covered in AMD-008. Error handling and logging are excluded from the count. A handler whose core logic exceeds this limit is a signal that the node is incorrectly scoped, not that the limit should be raised. |
+| Demo domain is arXiv pipeline, not VFX tool handlers | Phase 6 | Covered in AMD-006. The thesis claims domain-agnosticism. The demo domain should demonstrate that. VFX node types remain in the schema — VFX tool dependencies do not enter the codebase. |
+| Module-level graph state is incompatible with stateless HTTP or concurrent agent requests | Phase 7 onward | Covered in AMD-009. Remediation is a defined 5-step strangler fig migration (`state_management_migration.md`), not an afternoon refactor. Triggered only if HTTP/SSE MCP transport or web demo is required. |
 | `idiograph run` must be demonstrable without an API key | Phase 8 onward | Covered in AMD-010. The `--mock` flag is the mechanism. The architecture already supports this via the handler registry — the flag makes it explicit at the CLI surface. |
 | Domain implementations live under `domains/<domain>/`, never as siblings to `core/` | Phase 8 onward | Covered in AMD-011. `core/` is domain-agnostic. Domain-specific code belongs in its own namespace. The directory structure should communicate the architecture without a README. |
 | Edge type extensibility must remain open for USD arc types | Phase 8 onward | Covered in AMD-013. USD composition arc semantics (REFERENCES, INHERITS, SPECIALIZES, VARIANTS, PAYLOAD) must be addable as typed edges without modifying the Edge model. AMD-003 already enforces this; AMD-013 names the concrete future use. |
 | `summarize_intent()` must remain purely algorithmic — no LLM calls at the query layer | Phase 8 onward | Covered in AMD-013. Will be called on composition strategy subgraphs in Phase 10. An LLM call inside the query layer would undercut the determinism thesis at its foundation. |
+| Node schema must support optional `input_ports` / `output_ports` | Immediate | Covered in AMD-014. Required for port model without breaking existing graphs. |
+| Edge schema must support optional `from_port` / `to_port` | Immediate | Covered in AMD-014. Required for typed edge connections without breaking existing edges. |
+| Graph schema must support optional `type_registry` top-level key | Immediate | Covered in AMD-014. Type definitions must live in the graph document, not a separate store. |
+| Port type enforcement is a post-Phase-8 build target, not Phase 10 | Post-Phase-8 | Covered in AMD-014. This is a credibility requirement. Phase 10 is not the right gate. |
+| `validate_integrity()` is the enforcement entry point for port types | Post-Phase-8 | Covered in AMD-014. No new public API method required; extend existing validation surface. |
 
 ---
 
-## Open Questions — Additions
+## Open Questions
 
 | Question | Raised | Notes |
 |---|---|---|
-| Should `register_all()` live in `domains/arxiv/__init__.py` or a dedicated `domains/arxiv/register.py`? | 2026-03 | Decide at AMD-011 implementation. `__init__.py` is simpler; a dedicated file is more explicit about what it does. Either is acceptable — consistency with the existing handler registration pattern matters more than the specific choice. |
+| Should `summarize_intent()` use an LLM call internally, or be purely algorithmic? | 2026-03 | Algorithmic is safer for determinism thesis. LLM-assisted version could be a Phase 9 extension. Don't conflate the two. |
+| MCP server: stdio transport or HTTP/SSE? | Not yet raised | stdio is simpler for local dev; HTTP/SSE supports remote agents. Decide at Phase 8 start based on demo requirements. |
+| Should the handler registry support async-only handlers, or mixed sync/async? | 2026-03 | Async-only is cleaner and consistent with the execution model. Sync handlers can be wrapped with `asyncio.to_thread` if needed. Decide at Phase 6 implementation start. |
+| How should the results dict handle failed nodes — omit the key, or store the error? | 2026-03 | Storing a structured error dict under the node ID is preferable. Downstream nodes can inspect it; the executor can distinguish "not run yet" from "ran and failed." Decide at Phase 6 implementation start. |
+| Should `Discard` be a real node type or a terminal status on `Router`? | 2026-03 | Separate node is preferable — preserves the decision trail in graph state and keeps Router's responsibility narrow. But worth confirming once the routing logic is implemented. |
+| How does the discrete node/edge model handle continuous field evaluation in Phase 10 without losing the clean input/output contract the executor depends on? | 2026-03 | Field nodes in Phase 10 (ScalarField, VectorField, OrientationField) are continuous mathematical objects — they evaluate over a surface or volume rather than consuming and producing discrete data dicts. This is structurally different from every other node type in the system. Three candidate approaches: (1) handlers return a callable (the field function itself) as a value in the output dict — downstream projection nodes invoke it; (2) fields are evaluated at a fixed sample set defined in params and returned as a structured array; (3) field evaluation is treated as a dedicated pre-execution pass, separate from the main executor loop. Option 1 has two compounding problems: it breaks JSON serializability, and it breaks agent-readability — an agent inspecting graph state post-execution would find an opaque callable object where it expects structured data. That is a thesis violation, not merely a technical inconvenience. Option 2 preserves serializability but discretizes what is inherently continuous — the fidelity loss may be acceptable for a demo but is architecturally dishonest. Option 3 introduces a second execution model, which sounds like a compromise but may be the most defensible: a well-defined field evaluation pass with explicit structure and clear semantics is fully consistent with the thesis. The thesis does not require one execution model for everything — it requires explicit structure at every level. A principled second pass is not a contradiction; a collapsed workaround is. Resolve at Phase 10 design stage, not before — but the resolution should be framed as an architectural decision, not a technical patch. |
+| What are the compatibility rules for port types? | 2026-03 (AMD-014) | Minimum viable: exact match. Structural subtyping is a refinement. Decide at enforcement implementation, not now. |
+| How does the type registry handle versioned types? | 2026-03 (AMD-014) | A `SurfaceProperties_v2` is a different type, not a version of `SurfaceProperties`. Versioning strategy is a Phase 8.5 design question. |
+| Should MCP expose `get_type_registry` as a named tool? | 2026-03 (AMD-014) | Likely yes — an agent inspecting a graph needs the type registry to interpret port declarations. Decide at Phase 8 MCP tool surface design. |
 | What is the ConstraintSet schema? | 2026-03 (AMD-013) | Must be defined before gate milestone work begins. Minimum fields: prim path, attribute name, value type, layer context, ownership constraints. Exact schema is a Phase 10 design task, not a current gate. |
 | How does the backward-chaining solver handle contradictory constraints? | 2026-03 (AMD-013) | Contradiction is a first-class output, not an error. The solver should return a structured result explaining which constraints are in conflict and why — traceable to specific LIVRPS rules. Phase 10 design task. |
+| Should `register_all()` live in `domains/arxiv/__init__.py` or a dedicated `domains/arxiv/register.py`? | 2026-03 | Decide at AMD-011 implementation. `__init__.py` is simpler; a dedicated file is more explicit about what it does. Either is acceptable — consistency with the existing handler registration pattern matters more than the specific choice. |
 
 ---
 
-*Last updated: 2026-03*
+*Last updated: 2026-04-06*
 *Owner: Idiograph project*
