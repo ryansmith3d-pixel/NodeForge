@@ -208,5 +208,48 @@ If you encounter "NodeForge" anywhere in the codebase, it is a rename artifact. 
 
 ---
 
+---
+
+## Color Designer Tool
+
+**Location:** `tools/color-designer/`
+**Environment:** Separate `uv` environment — do NOT use the root environment
+**Spec:** `tools/color-designer/SPEC.md` — read before implementing anything
+
+### Environment commands
+
+```bash
+cd tools/color-designer
+uv run python src/main.py        # launch the app
+uv run python test_token_store.py  # verify token store
+```
+
+### Architecture constraints
+
+| Constraint | Rationale |
+|---|---|
+| No Idiograph-specific logic inside tool core | Tool is built to extract as standalone |
+| Token file is open registry — never hardcode role names in UI code | Roles are data, not code |
+| `token_store.py` is pure data layer — no UI imports | Survives any UI rewrite |
+| All file operations use `encoding="utf-8"` explicitly | Windows compat |
+| Node view state is per-instance, not global | Each node remembers its own view |
+
+### Test gate
+
+No pytest suite yet for the color designer. Before and after every change:
+
+```bash
+cd tools/color-designer
+uv run python test_token_store.py
+```
+
+Must exit cleanly with "Round-trip passed" before proceeding.
+
+### Current phase
+
+**Phase A — Canvas scaffold**
+QGraphicsScene/QGraphicsView with pan, zoom, draggable empty nodes.
+See SPEC.md for full phase breakdown.
+
 *Last updated: 2026-04-06*
 *Owner: Idiograph project — Ryan Smith*

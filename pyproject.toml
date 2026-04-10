@@ -23,6 +23,11 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/idiograph"]
 
+[tool.uv.workspace]
+members = [
+    "tools/color-designer",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
