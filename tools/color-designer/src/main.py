@@ -5,6 +5,7 @@ from PySide6.QtCore import QPointF
 
 from canvas import NodeGraphScene, NodeGraphView
 from nodes.base_node import BaseNode
+from nodes.swatch_node import SwatchNode
 
 HERE = Path(__file__).parent
 
@@ -33,11 +34,14 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(add_btn)
 
     def _seed_nodes(self) -> None:
-        """Place a few empty nodes so Phase A is immediately demonstrable."""
-        for i, title in enumerate(["Color Swatch", "Assign", "Write"]):
-            node = BaseNode(title, QPointF(i * 220, 0))
+        swatches = [
+            SwatchNode("#7eb8f7", "node.selected", QPointF(0, 0)),
+            SwatchNode("#2e2e3a", "node.default", QPointF(240, 0)),
+            SwatchNode("#f7c948", "semantic.alert", QPointF(480, 0)),
+        ]
+        for node in swatches:
             self._scene.addItem(node)
-        self._node_counter = 3
+        self._node_counter = 0
 
     def _add_node(self) -> None:
         self._node_counter += 1
