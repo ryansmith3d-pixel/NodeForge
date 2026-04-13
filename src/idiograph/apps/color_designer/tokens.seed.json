@@ -1,25 +1,25 @@
 {
   "surface": {
-    "canvas": "#aaaa7f",
-    "panel": "#24242c"
+    "canvas": "#555568",
+    "panel": "#f7c948"
   },
   "node": {
-    "default": "#2e2e3a",
-    "selected": "#7eb8f7"
+    "default": "#4ab88a",
+    "selected": "#c0392b"
   },
   "node_status": {
-    "pending": "#aaff00",
-    "running": "#f7c948",
-    "running_highlight": "#ffe89a",
-    "complete": "#4ab88a",
-    "failed": "#c0392b"
+    "pending": "#ccccdd",
+    "running": "#ccccdd",
+    "running_highlight": "#ccccdd",
+    "complete": "#ccccdd",
+    "failed": "#87dd07"
   },
   "edge": {
-    "default": "#3a3a4a",
-    "selected": "#7eb8f7"
+    "default": "#ccccdd",
+    "selected": "#ccccdd"
   },
   "semantic": {
-    "alert": "#f7c948",
-    "error": "#c0392b"
+    "alert": "#ccccdd",
+    "error": "#ccccdd"
   }
 }
