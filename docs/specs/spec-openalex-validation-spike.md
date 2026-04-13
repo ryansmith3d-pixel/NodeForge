@@ -50,7 +50,8 @@ This is a **read-only data inspection spike**. No pipeline code is being written
 | Python | 3.13, managed by `uv` |
 | Linting | `ruff` clean before every commit |
 | HTTP client | `httpx` (sync is fine for this spike — it's a script, not pipeline code) |
-| Politeness | `mailto=` param on every OpenAlex call; `time.sleep(0.1)` between calls |
+| Authentication | `OPENALEX_API_KEY` loaded from `.env` via `python-dotenv`; passed as `api_key=` query param on every call. All OpenAlex calls now require a free API key — register at openalex.org. The client halts with a clear error if the key is missing. |
+| Politeness | `mailto=` param on every OpenAlex call alongside `api_key=`; `time.sleep(0.150)` between calls |
 | File encoding | `encoding="utf-8"` on every file open, no exceptions |
 | Existing tests | The 44-test suite must pass before and after every change in this spike |
 | Working directory | `scripts/spikes/openalex_crispr/` |
