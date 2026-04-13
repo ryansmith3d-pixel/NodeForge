@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_URL = "https://api.openalex.org"
-MAILTO = "api@theidiograph.com"
 SLEEP_SECONDS = 0.150
 
 
@@ -28,7 +27,7 @@ def _api_key() -> str:
 
 
 def _params(extra: dict | None = None) -> dict:
-    params = {"mailto": MAILTO, "api_key": _api_key()}
+    params = {"api_key": _api_key()}
     if extra:
         params.update(extra)
     return params
