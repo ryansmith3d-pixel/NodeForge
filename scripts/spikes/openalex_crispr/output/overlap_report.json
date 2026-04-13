@@ -1,0 +1,71 @@
+{
+  "doudna_seed_id": "https://openalex.org/W2045435533",
+  "zhang_seed_id": "https://openalex.org/W2064815984",
+  "doudna_reference_count": 48,
+  "zhang_reference_count": 32,
+  "intersection_count": 10,
+  "doudna_only_count": 38,
+  "zhang_only_count": 22,
+  "intersection": [
+    {
+      "id": "https://openalex.org/W2135598273",
+      "doi": "https://doi.org/10.1128/jb.01412-07",
+      "title": "Phage Response to CRISPR-Encoded Resistance in <i>Streptococcus thermophilus</i>",
+      "year": 2007
+    },
+    {
+      "id": "https://openalex.org/W2010986636",
+      "doi": "https://doi.org/10.1126/science.1159689",
+      "title": "Small CRISPR RNAs Guide Antiviral Defense in Prokaryotes",
+      "year": 2008
+    },
+    {
+      "id": "https://openalex.org/W2149751339",
+      "doi": "https://doi.org/10.1099/mic.0.023960-0",
+      "title": "Short motif sequences determine the targets of the prokaryotic CRISPR defence system",
+      "year": 2009
+    },
+    {
+      "id": "https://openalex.org/W2025074364",
+      "doi": "https://doi.org/10.1038/nbt.1755",
+      "title": "A TALE nuclease architecture for efficient genome editing",
+      "year": 2010
+    },
+    {
+      "id": "https://openalex.org/W2112006537",
+      "doi": "https://doi.org/10.1534/genetics.110.120717",
+      "title": "Targeting DNA Double-Strand Breaks with TAL Effector Nucleases",
+      "year": 2010
+    },
+    {
+      "id": "https://openalex.org/W1978094899",
+      "doi": "https://doi.org/10.1038/nature09523",
+      "title": "The CRISPR/Cas bacterial immune system cleaves bacteriophage and plasmid DNA",
+      "year": 2010
+    },
+    {
+      "id": "https://openalex.org/W2120503144",
+      "doi": "https://doi.org/10.1038/nature09886",
+      "title": "CRISPR RNA maturation by trans-encoded small RNA and host factor RNase III",
+      "year": 2011
+    },
+    {
+      "id": "https://openalex.org/W2131527797",
+      "doi": "https://doi.org/10.1146/annurev-genet-110410-132430",
+      "title": "CRISPR-Cas Systems in Bacteria and Archaea: Versatile Small RNAs for Adaptive Defense and Regulation",
+      "year": 2011
+    },
+    {
+      "id": "https://openalex.org/W2163241233",
+      "doi": "https://doi.org/10.1038/nrmicro2577",
+      "title": "Evolution and classification of the CRISPR–Cas systems",
+      "year": 2011
+    },
+    {
+      "id": "https://openalex.org/W2112295554",
+      "doi": "https://doi.org/10.1093/nar/gkr606",
+      "title": "The Streptococcus thermophilus CRISPR/Cas system provides immunity in Escherichia coli",
+      "year": 2011
+    }
+  ]
+}
