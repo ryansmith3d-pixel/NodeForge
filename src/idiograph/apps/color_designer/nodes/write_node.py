@@ -6,10 +6,17 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QPointF, QTimer
 
+import asyncio
+
 from idiograph.apps.color_designer.nodes.base_node import BaseNode, NODE_WIDTH
 from idiograph.apps.color_designer.nodes.assign_node import AssignNode
 from idiograph.apps.color_designer.nodes.array_assign_node import ArrayAssignNode
 from idiograph.apps.color_designer.token_store import TokenStore
+from idiograph.core.executor import execute_graph
+from idiograph.core.logging_config import get_logger
+from idiograph.core.models import Node
+
+_log = get_logger("apps.color_designer.write_node")
 
 # ── port modes ────────────────────────────────────────────────────────────────
 _PORT_MODES = ["All", "Conn", "Gang"]
@@ -157,7 +164,13 @@ class _WriteBody(QWidget):
 
     def _on_save(self) -> None:
         self.refresh_list()
-        self._node.save()
+        scene = self._node.scene()
+        if scene is None:
+            _log.warning("Save clicked but WriteNode has no scene; skipping.")
+            return
+        graph = scene.build_graph()
+        results = asyncio.run(execute_graph(graph))
+        _log.info("Color designer pipeline complete: %s", results)
 
 
 # ── node ──────────────────────────────────────────────────────────────────────
@@ -234,3 +247,10 @@ class WriteNode(BaseNode):
         for role, value in self.collect_assignments().items():
             store.set(role, value)
         store.save()
+
+    def to_idiograph_node(self) -> Node:
+        return Node(
+            id=self.node_id,
+            type="write_tokens",
+            params={"token_file": str(self.token_path)},
+        )

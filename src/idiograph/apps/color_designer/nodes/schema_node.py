@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt, QPointF
 
 from idiograph.apps.color_designer.nodes.base_node import BaseNode, NODE_WIDTH
 from idiograph.apps.color_designer.token_store import TokenStore
+from idiograph.core.models import Node
 
 # ── layout ────────────────────────────────────────────────────────────────────
 BODY_H = 220   # fixed scrollable role list
@@ -139,3 +140,10 @@ class SchemaNode(BaseNode):
         """Number of token roles currently loaded — consumed by Color Array
         and Array Assign for cardinality alignment."""
         return len(self.roles)
+
+    def to_idiograph_node(self) -> Node:
+        return Node(
+            id=self.node_id,
+            type="schema",
+            params={"token_file": str(self.token_path)},
+        )

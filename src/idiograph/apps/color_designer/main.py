@@ -18,6 +18,9 @@ TOKEN_FILE = HERE / "tokens.seed.json"
 
 class MainWindow(QMainWindow):
     def __init__(self):
+        from idiograph.domains.color_designer import register_color_designer_handlers
+        register_color_designer_handlers()
+
         super().__init__()
         self.setWindowTitle("Idiograph — Color Designer")
         self.setMinimumSize(900, 600)

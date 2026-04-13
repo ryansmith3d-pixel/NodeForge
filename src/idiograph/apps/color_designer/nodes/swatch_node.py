@@ -7,6 +7,7 @@ from PySide6.QtCore import Qt, QPointF
 from PySide6.QtGui import QColor
 
 from idiograph.apps.color_designer.nodes.base_node import BaseNode, NODE_WIDTH
+from idiograph.core.models import Node
 
 # ── view constants ────────────────────────────────────────────────────────────
 _VIEWS = ["Full", "Cmp", "Data"]
@@ -170,6 +171,13 @@ class SwatchNode(BaseNode):
 
     def _set_color(self, hex_value: str) -> None:
         self.hex_value = hex_value
+
+    def to_idiograph_node(self) -> Node:
+        return Node(
+            id=self.node_id,
+            type="color_swatch",
+            params={"hex": self.hex_value, "label": self.label},
+        )
 
     # ── view switching ────────────────────────────────────────────────────────
 

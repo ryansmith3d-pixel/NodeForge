@@ -2,6 +2,9 @@ from PySide6.QtWidgets import QGraphicsScene, QGraphicsView
 from PySide6.QtCore import Qt, QPointF, QRectF
 from PySide6.QtGui import QPainter, QColor, QBrush
 
+from idiograph.apps.color_designer.nodes.base_node import BaseNode
+from idiograph.core.models import Edge, Graph
+
 
 class NodeGraphScene(QGraphicsScene):
     def __init__(self, parent=None):
@@ -78,6 +81,36 @@ class NodeGraphScene(QGraphicsScene):
             if isinstance(item, Port):
                 return item
         return None
+
+    # ── graph export ─────────────────────────────────────────────────────────
+
+    def build_graph(self) -> Graph:
+        """Snapshot current scene state as an Idiograph Graph.
+
+        Nodes come from each BaseNode's to_idiograph_node(); edges come from
+        live Wire items whose source and target ports are both attached.
+        """
+        from idiograph.apps.color_designer.nodes.wire import Wire
+
+        nodes = [
+            item.to_idiograph_node()
+            for item in self.items()
+            if isinstance(item, BaseNode)
+        ]
+        edges = []
+        for item in self.items():
+            if not isinstance(item, Wire):
+                continue
+            if item.source_port is None or item.target_port is None:
+                continue
+            src_node = item.source_port.parentItem()
+            tgt_node = item.target_port.parentItem()
+            if src_node is None or tgt_node is None:
+                continue
+            edges.append(
+                Edge(source=src_node.node_id, target=tgt_node.node_id, type="DATA")
+            )
+        return Graph(name="color_design", version="1.0", nodes=nodes, edges=edges)
 
 
 class NodeGraphView(QGraphicsView):

@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt, QPointF
 from PySide6.QtGui import QColor
 
 from idiograph.apps.color_designer.nodes.base_node import BaseNode, NODE_WIDTH
+from idiograph.core.models import Node
 
 # ── view labels ───────────────────────────────────────────────────────────────
 _VIEWS = ["Cmp", "List", "Grid"]
@@ -417,3 +418,10 @@ class ArrayNode(BaseNode):
     def colors(self) -> list[tuple[str, str]]:
         """Return current (hex, label) pairs for downstream nodes."""
         return list(self.rows)
+
+    def to_idiograph_node(self) -> Node:
+        return Node(
+            id=self.node_id,
+            type="color_array",
+            params={"colors": [{"label": lbl, "hex": h} for h, lbl in self.rows]},
+        )

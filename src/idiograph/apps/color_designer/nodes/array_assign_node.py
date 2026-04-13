@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt, QPointF, QTimer
 from idiograph.apps.color_designer.nodes.base_node import BaseNode, NODE_WIDTH, HEADER_HEIGHT
 from idiograph.apps.color_designer.nodes.array_node import ArrayNode
 from idiograph.apps.color_designer.token_store import TokenStore
+from idiograph.core.models import Node
 
 # ── layout ────────────────────────────────────────────────────────────────────
 ARRAY_ASSIGN_BODY_H = 220
@@ -227,3 +228,10 @@ class ArrayAssignNode(BaseNode):
         widget = self._proxy.widget()
         if isinstance(widget, _ArrayAssignBody):
             widget.refresh()
+
+    def to_idiograph_node(self) -> Node:
+        return Node(
+            id=self.node_id,
+            type="array_assign",
+            params={},
+        )

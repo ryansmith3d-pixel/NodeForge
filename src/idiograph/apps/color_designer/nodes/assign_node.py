@@ -9,6 +9,7 @@ from PySide6.QtGui import QColor
 
 from idiograph.apps.color_designer.nodes.base_node import BaseNode, NODE_WIDTH, HEADER_HEIGHT
 from idiograph.apps.color_designer.token_store import TokenStore
+from idiograph.core.models import Node
 
 # ── layout ────────────────────────────────────────────────────────────────────
 ASSIGN_BODY_H = 76  # margins + dropdown(26) + spacing(4) + color row(28) + bottom
@@ -156,3 +157,10 @@ class AssignNode(BaseNode):
     def assignment(self) -> tuple[str, str]:
         """Return the (role, color) pair this node represents."""
         return (self.role, self.color)
+
+    def to_idiograph_node(self) -> Node:
+        return Node(
+            id=self.node_id,
+            type="assign",
+            params={"role": self.role},
+        )
