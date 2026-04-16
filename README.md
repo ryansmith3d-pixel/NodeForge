@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/idiograph/idiograph/actions/workflows/tests.yml/badge.svg)](https://github.com/idiograph/idiograph/actions/workflows/tests.yml) [![codecov](https://codecov.io/github/idiograph/idiograph/graph/badge.svg?token=1U3JZJ7V4E)](https://codecov.io/github/idiograph/idiograph)
 
-**A semantic graph system for VFX and AI workflows — built to demonstrate what production AI tooling looks like when it is designed by a pipeline engineer.**
+**Deterministic graph execution for production AI pipelines. Built by a VFX practitioner, not a researcher.**
 
 ---
 
