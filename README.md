@@ -91,6 +91,7 @@ apps/color_designer/       # PySide6 UI — a view of the domain, not the domain
 
 ## Pipelines
 
+<!-- GENERATED:arxiv-pipeline -->
 ```mermaid
 flowchart LR
     fetch["fetch<br/>FetchAbstract"]
@@ -101,6 +102,7 @@ flowchart LR
     claims -->|DATA| evaluate
     evaluate -->|CONTROL| summarize
 ```
+<!-- END GENERATED -->
 
 ---
 
