@@ -596,6 +596,104 @@ def clean_cycles(
     )
 
 
+# ── Node 5 — Co-Citation ────────────────────────────────────────────────────
+
+
+def compute_co_citations(
+    nodes: list[PaperRecord],
+    cites_edges: list[CitationEdge],
+    min_strength: int = 2,
+    max_edges: int | None = None,
+) -> list[CitationEdge]:
+    """Compute co-citation edges across the assembled citation graph.
+
+    Two papers A and B are co-cited whenever any third paper C cites both;
+    the number of shared citers is the edge ``strength``. See
+    docs/specs/spec-node5-co-citation.md for the full contract, including
+    the global cross-root semantics (AMD-017), canonical form, and sort
+    ordering.
+
+    Raises ``ValueError`` on invalid ``min_strength`` (< 1) or ``max_edges``
+    (< 0). Pure function — no I/O, no mutation of inputs.
+    """
+    if min_strength < 1:
+        raise ValueError(f"min_strength must be >= 1, got {min_strength}")
+    if max_edges is not None and max_edges < 0:
+        raise ValueError(f"max_edges must be >= 0 or None, got {max_edges}")
+
+    _log.info(
+        "Node 5: co-citation on %d nodes, %d citation edges, min_strength=%d",
+        len(nodes),
+        len(cites_edges),
+        min_strength,
+    )
+
+    node_ids: set[str] = {n.node_id for n in nodes}
+    citers: dict[str, set[str]] = {nid: set() for nid in node_ids}
+    warned_missing: set[str] = set()
+
+    for e in cites_edges:
+        if e.source_id == e.target_id:
+            continue
+        if e.source_id not in node_ids:
+            if e.source_id not in warned_missing:
+                warned_missing.add(e.source_id)
+                _log.warning(
+                    "Node 5: citation edge references unknown node_id %s; skipping",
+                    e.source_id,
+                )
+            continue
+        if e.target_id not in node_ids:
+            if e.target_id not in warned_missing:
+                warned_missing.add(e.target_id)
+                _log.warning(
+                    "Node 5: citation edge references unknown node_id %s; skipping",
+                    e.target_id,
+                )
+            continue
+        citers[e.target_id].add(e.source_id)
+
+    targets = sorted(citers.keys())
+    co_edges: list[CitationEdge] = []
+    for i in range(len(targets)):
+        t1 = targets[i]
+        citers_t1 = citers[t1]
+        if not citers_t1:
+            continue
+        for j in range(i + 1, len(targets)):
+            t2 = targets[j]
+            citers_t2 = citers[t2]
+            if not citers_t2:
+                continue
+            strength = len(citers_t1 & citers_t2)
+            if strength >= min_strength:
+                co_edges.append(
+                    CitationEdge(
+                        source_id=t1,
+                        target_id=t2,
+                        type="co_citation",
+                        citing_paper_year=None,
+                        strength=strength,
+                    )
+                )
+
+    co_edges.sort(key=lambda e: (-e.strength, e.source_id, e.target_id))
+    if max_edges is not None:
+        co_edges = co_edges[:max_edges]
+
+    if not co_edges:
+        _log.debug("Node 5: no co-citation pairs met min_strength threshold")
+
+    _log.info(
+        "Node 5 complete: %d co-citation edges emitted (min_strength=%d, max_edges=%s)",
+        len(co_edges),
+        min_strength,
+        max_edges,
+    )
+
+    return co_edges
+
+
 ARXIV_PIPELINE: Graph = Graph(
     name="arxiv_abstract_pipeline",
     version="1.0",
@@ -637,8 +735,8 @@ ARXIV_PIPELINE: Graph = Graph(
         ),
     ],
     edges=[
-        Edge(source="fetch",    target="claims",   type="DATA"),
-        Edge(source="claims",   target="evaluate", type="DATA"),
+        Edge(source="fetch", target="claims", type="DATA"),
+        Edge(source="claims", target="evaluate", type="DATA"),
         Edge(source="evaluate", target="summarize", type="CONTROL"),
     ],
 )
