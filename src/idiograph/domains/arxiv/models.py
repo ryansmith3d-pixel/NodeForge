@@ -4,7 +4,27 @@
 # Idiograph — deterministic semantic graph execution for production AI pipelines.
 # https://github.com/idiograph/idiograph
 
+from typing import Literal
+
 from pydantic import BaseModel, Field, model_validator
+
+
+class DepthMetrics(BaseModel):
+    """Per-node depth metrics produced by Node 6 compute_depth_metrics.
+
+    Merged into PaperRecord at pipeline orchestrator layer via model_copy.
+    """
+
+    hop_depth_per_root: dict[str, int] = Field(
+        description="Shortest-path distance from each reaching root, over the "
+                    "undirected view of the cleaned citation graph. Key: root "
+                    "node_id. Value: non-negative integer distance. A node's "
+                    "own node_id appears with value 0 iff the node is a root."
+    )
+    traversal_direction: Literal["seed", "backward", "forward", "mixed"] = Field(
+        description="Categorical position relative to the seed set. See AMD-019 "
+                    "for vocabulary definitions."
+    )
 
 
 class PaperRecord(BaseModel):
@@ -53,9 +73,16 @@ class PaperRecord(BaseModel):
     pagerank: float | None = Field(
         default=None, description="Assigned by Node 6 — NetworkX PageRank."
     )
-    topological_depth: int | None = Field(
+    hop_depth_per_root: dict[str, int] = Field(
+        default_factory=dict,
+        description="Assigned by Node 6 — shortest-path distance from each "
+                    "reaching root over the undirected view of the cleaned "
+                    "citation graph. Empty dict before Node 6 runs.",
+    )
+    traversal_direction: Literal["seed", "backward", "forward", "mixed"] | None = Field(
         default=None,
-        description="Longest path from root in cycle-cleaned DAG. Assigned by Node 6. Null for nodes involved in suppressed cycles.",
+        description="Assigned by Node 6 — categorical position relative to the "
+                    "seed set. See AMD-019.",
     )
     relationship_type: str | None = Field(
         default=None,
@@ -130,7 +157,12 @@ class CycleLog(BaseModel):
 
     @property
     def affected_node_ids(self) -> set[str]:
-        """node_ids whose topological_depth must be null downstream (Node 6 handoff)."""
+        """node_ids whose original edges were suppressed during cycle cleaning.
+
+        Retained for audit and provenance (Node 8). Under AMD-019, Node 6 does
+        not require this handoff — suppressed-cycle nodes receive normal depth
+        metrics computed over the cleaned DAG.
+        """
         result: set[str] = set()
         for e in self.suppressed_edges:
             result.add(e.original.source_id)
