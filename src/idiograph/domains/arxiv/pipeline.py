@@ -742,8 +742,8 @@ def compute_depth_metrics(
         undirected_distance[r] = nx.single_source_shortest_path_length(
             G_undirected, r
         )
-        forward_from[r] = nx.descendants(G_directed, r)
-        backward_from[r] = nx.ancestors(G_directed, r)
+        backward_from[r] = nx.descendants(G_directed, r)  # papers the seed cites
+        forward_from[r] = nx.ancestors(G_directed, r)     # papers citing the seed
 
     roots_set = set(roots)
     counts = {"seed": 0, "backward": 0, "forward": 0, "mixed": 0}
@@ -762,11 +762,11 @@ def compute_depth_metrics(
         if nid in roots_set:
             direction: Literal["seed", "backward", "forward", "mixed"] = "seed"
         else:
-            forward_hits = [r for r in reaching_roots if nid in forward_from[r]]
             backward_hits = [r for r in reaching_roots if nid in backward_from[r]]
-            if forward_hits == reaching_roots and not backward_hits:
+            forward_hits = [r for r in reaching_roots if nid in forward_from[r]]
+            if backward_hits == reaching_roots and not forward_hits:
                 direction = "backward"
-            elif backward_hits == reaching_roots and not forward_hits:
+            elif forward_hits == reaching_roots and not backward_hits:
                 direction = "forward"
             else:
                 direction = "mixed"
