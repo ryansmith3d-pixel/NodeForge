@@ -8,6 +8,7 @@ import asyncio
 import math
 import os
 from datetime import date
+from typing import Literal
 
 import httpx
 import networkx as nx
@@ -19,6 +20,7 @@ from idiograph.domains.arxiv.models import (
     CitationEdge,
     CycleCleanResult,
     CycleLog,
+    DepthMetrics,
     PaperRecord,
     SuppressedEdge,
     make_node_id,
@@ -693,6 +695,131 @@ def compute_co_citations(
     )
 
     return co_edges
+
+
+# ── Node 6 — Metric Computation ─────────────────────────────────────────────
+
+
+def compute_depth_metrics(
+    nodes: list[PaperRecord],
+    cleaned_edges: list[CitationEdge],
+) -> dict[str, DepthMetrics]:
+    """Compute per-node depth metrics on the cleaned citation graph.
+
+    For every input node, returns a ``DepthMetrics`` carrying
+    ``hop_depth_per_root`` (BFS distance from each reaching root over the
+    undirected view of the graph) and ``traversal_direction`` (categorical
+    position relative to the seed set: seed/backward/forward/mixed). See
+    docs/specs/spec-node6-metrics.md and AMD-019 for the full contract.
+
+    Raises ``ValueError`` if no roots are present in ``nodes`` or if any
+    node is unreachable from every root. Pure function — no I/O, no
+    mutation of inputs.
+    """
+    if not nodes:
+        return {}
+
+    roots = [n.node_id for n in nodes if n.node_id in n.root_ids]
+    if not roots:
+        raise ValueError("No roots found in nodes")
+
+    G_directed: nx.DiGraph = nx.DiGraph()
+    G_directed.add_nodes_from(n.node_id for n in nodes)
+    G_directed.add_edges_from((e.source_id, e.target_id) for e in cleaned_edges)
+    G_undirected = G_directed.to_undirected()
+
+    _log.info(
+        "Node 6 depth: %d nodes, %d edges, %d roots",
+        len(nodes),
+        len(cleaned_edges),
+        len(roots),
+    )
+
+    undirected_distance: dict[str, dict[str, int]] = {}
+    forward_from: dict[str, set[str]] = {}
+    backward_from: dict[str, set[str]] = {}
+    for r in roots:
+        undirected_distance[r] = nx.single_source_shortest_path_length(
+            G_undirected, r
+        )
+        forward_from[r] = nx.descendants(G_directed, r)
+        backward_from[r] = nx.ancestors(G_directed, r)
+
+    roots_set = set(roots)
+    counts = {"seed": 0, "backward": 0, "forward": 0, "mixed": 0}
+    result: dict[str, DepthMetrics] = {}
+
+    for n in nodes:
+        nid = n.node_id
+        reaching_roots = [r for r in roots if nid in undirected_distance[r]]
+
+        if not reaching_roots:
+            _log.error("Node %s unreachable from any root", nid)
+            raise ValueError(f"Node {nid} unreachable from any root")
+
+        hop_depth_per_root = {r: undirected_distance[r][nid] for r in reaching_roots}
+
+        if nid in roots_set:
+            direction: Literal["seed", "backward", "forward", "mixed"] = "seed"
+        else:
+            forward_hits = [r for r in reaching_roots if nid in forward_from[r]]
+            backward_hits = [r for r in reaching_roots if nid in backward_from[r]]
+            if forward_hits == reaching_roots and not backward_hits:
+                direction = "backward"
+            elif backward_hits == reaching_roots and not forward_hits:
+                direction = "forward"
+            else:
+                direction = "mixed"
+
+        counts[direction] += 1
+        result[nid] = DepthMetrics(
+            hop_depth_per_root=hop_depth_per_root,
+            traversal_direction=direction,
+        )
+
+    _log.info(
+        "Node 6 depth complete: seed=%d, backward=%d, forward=%d, mixed=%d",
+        counts["seed"],
+        counts["backward"],
+        counts["forward"],
+        counts["mixed"],
+    )
+
+    return result
+
+
+def compute_pagerank(
+    nodes: list[PaperRecord],
+    cleaned_edges: list[CitationEdge],
+    damping: float = 0.85,
+) -> dict[str, float]:
+    """Compute PageRank for every node in the cleaned citation graph.
+
+    Returns ``{node_id: pagerank}``. Every input node receives a value,
+    including isolates. Output values sum to 1.0 within NetworkX
+    convergence tolerance. ``damping`` is passed through to
+    ``nx.pagerank`` as ``alpha``; out-of-range values raise via NetworkX.
+    Pure function — no I/O, no mutation of inputs.
+    """
+    if not nodes:
+        return {}
+
+    _log.info(
+        "Node 6 pagerank: %d nodes, %d edges, alpha=%s",
+        len(nodes),
+        len(cleaned_edges),
+        damping,
+    )
+
+    G: nx.DiGraph = nx.DiGraph()
+    G.add_nodes_from(n.node_id for n in nodes)
+    G.add_edges_from((e.source_id, e.target_id) for e in cleaned_edges)
+
+    pr = nx.pagerank(G, alpha=damping)
+
+    _log.info("Node 6 pagerank complete")
+
+    return dict(pr)
 
 
 ARXIV_PIPELINE: Graph = Graph(
