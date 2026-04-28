@@ -168,17 +168,30 @@ Mapping of spec §Contracts bullets to enforcing tests:
 | Disconnected components all assigned | `test_disconnected_graph` |
 | Call-site merge (`cleaned + suppressed.original`) shape | `test_suppressed_originals_merge` |
 | Community ids are strings | `test_community_id_is_string` |
-| `RuntimeError` on missing both libraries | not exercised — both libraries pinned in `[community]` extra and verified installed at session start. The `RuntimeError` branch is reachable only when a developer runs without `uv sync --extra community`; mocking the import path adds friction with no architectural benefit. Surfaced for the reviewer. |
+| `RuntimeError` on missing both libraries | `test_raises_when_neither_installed` (added post-CI; see below) |
+| Leiden fallback when only infomap is missing | `test_leiden_fallback_when_infomap_missing` (added post-CI; see below) |
 
 ---
 
 ## Deviations from the spec
 
-One sanctioned deviation, named:
+Two sanctioned deviations, named:
 
 - **Spec file `docs/specs/spec-node7-community-detection.md` lands with
   this PR.** Same pattern as Nodes 5 and 6 (spec drops in the working
   tree at session start, lands with the implementation PR).
+- **Two tests added beyond the spec's 15-test minimum set:**
+  `test_leiden_fallback_when_infomap_missing` and
+  `test_raises_when_neither_installed`. The spec's 15-test set does
+  not exercise the Leiden fallback path or the no-libraries
+  `RuntimeError` branch — both are unreachable when both libraries are
+  installed (the normal local-dev state). `codecov/patch` flagged the
+  resulting 71.42% patch coverage on first PR run; the threshold is
+  89.07%. Mirroring Node 5's "Beyond the spec §Tests minimum set"
+  section, these two tests use a `monkeypatch`-based
+  `_patch_imports()` helper to simulate missing libraries and force
+  the uncovered branches. Total Node 7 test count: **17** (15 spec +
+  2 coverage closures).
 
 No in-spec edits. No structural deviations.
 

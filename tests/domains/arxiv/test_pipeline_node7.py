@@ -240,3 +240,53 @@ def test_validation_flags_always_list() -> None:
     result = detect_communities(nodes, edges)
 
     assert isinstance(result.validation_flags, list)
+
+
+# Beyond the spec §Tests minimum set — these close coverage gaps for the
+# fallback paths (Leiden activation, RuntimeError on no-libraries) that the
+# spec's 15-test set does not exercise in normal runs.
+
+
+def _patch_imports(monkeypatch: pytest.MonkeyPatch, fail: set[str]) -> None:
+    """Make `from <name> import ...` (and `import <name>`) raise ImportError
+    for any module name in ``fail``. Other imports pass through normally."""
+    import builtins
+    real_import = builtins.__import__
+
+    def fake_import(name: str, *args, **kwargs):  # type: ignore[no-untyped-def]
+        if name in fail:
+            raise ImportError(f"simulated: {name} not installed")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+
+def test_leiden_fallback_when_infomap_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Infomap ImportError routes to the Leiden path; result is valid."""
+    _patch_imports(monkeypatch, fail={"infomap"})
+
+    nodes = [_rec(x) for x in ("A", "B", "C", "D")]
+    edges = [_edge("A", "B"), _edge("C", "D")]
+
+    result = detect_communities(
+        nodes, edges, community_count_min=1, community_count_max=10
+    )
+
+    assert result.algorithm_used == "leiden"
+    assert set(result.community_assignments.keys()) == {"A", "B", "C", "D"}
+    assert result.community_count == len(set(result.community_assignments.values()))
+
+
+def test_raises_when_neither_installed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Both ImportErrors → RuntimeError with the install-extras message."""
+    _patch_imports(monkeypatch, fail={"infomap", "leidenalg", "igraph"})
+
+    nodes = [_rec("A"), _rec("B")]
+    edges = [_edge("A", "B")]
+
+    with pytest.raises(RuntimeError, match="uv sync --extra community"):
+        detect_communities(nodes, edges)
